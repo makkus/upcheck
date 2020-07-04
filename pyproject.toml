@@ -1,0 +1,49 @@
+[build-system]
+requires = [
+    "setuptools >= 41.6.0",
+    "setuptools_scm >= 3.3.3, <4",
+    "wheel >= 0.33.6",
+]
+build-backend = 'setuptools.build_meta'
+
+[tool.black]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | external
+)/
+'''
+
+[tool.portray]
+output_dir = "site"
+modules = [
+"upcheck",
+]
+extra_markdown_extensions = [
+  "attr_list"
+]
+include_reference_documentation = false
+[tool.portray.mkdocs.theme]
+name = "material"
+palette = {primary = "blue grey", accent = "pink"}
+
+
+[tool.portray.mkdocs]
+repo_url = "https://gitlab.com/frkl/upcheck"
+repo_name = "upcheck"
+plugins = [
+  "search",
+  "macros"
+]
+
+[tool.dephell.main]
+from = {format = "setuppy", path = "setup.py"}

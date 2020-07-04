@@ -1,0 +1,14 @@
+{
+    "template": "https://gitlab.com/frkl/template-python-project.git",
+    "commit": "062128e52e3bc0f170a43cc77d9ad37133e51761",
+    "context": {
+        "cookiecutter": {
+            "full_name": "Markus Binsteiner",
+            "email": "markus@frkl.io",
+            "project_name": "upcheck",
+            "project_slug": "upcheck",
+            "project_short_description": "Collect website accessability metrics",
+            "_template": "https://gitlab.com/frkl/template-python-project.git"
+        }
+    }
+}
