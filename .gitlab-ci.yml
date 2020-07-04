@@ -215,16 +215,16 @@ container_image_dev:
        .
      - docker push $CI_REGISTRY_IMAGE:dev
 
-#release_binary_linux:
-#  stage: release
-#  image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
-#  only:
-#    - develop
-#  environment:
-#    name: dev
-#  needs:
-#    - binary_linux
-#    - binary_windows
-#  script:
-#  - aws s3 cp --content-type binary/octet-stream dist_binary/linux-gnu/upcheck s3://dev.dl.frkl.io/linux-gnu/upcheck
-#  - aws s3 cp --content-type binary/octet-stream dist_binary/windows/upcheck.exe s3://dev.dl.frkl.io/windows/upcheck.exe
+release_binary_linux:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
+  only:
+    - develop
+  environment:
+    name: dev
+  needs:
+    - binary_linux
+    - binary_windows
+  script:
+  - aws s3 cp --content-type binary/octet-stream dist_binary/linux-gnu/upcheck s3://dev.dl.frkl.io/linux-gnu/upcheck
+  - aws s3 cp --content-type binary/octet-stream dist_binary/windows/upcheck.exe s3://dev.dl.frkl.io/windows/upcheck.exe
