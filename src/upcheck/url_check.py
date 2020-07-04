@@ -8,8 +8,11 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
 from urllib.parse import ParseResult
 
 import aiohttp
-import yaml
 from aiohttp import ClientError, ClientResponseError
+from ruamel.yaml import YAML
+
+
+yaml = YAML()
 
 
 class CheckResult(object):
@@ -258,8 +261,7 @@ class UrlChecks(object):
 
         try:
 
-            content_string = path.read_text()
-            content = yaml.load(content_string)
+            content = yaml.load(path)
         except Exception as e:
             raise Exception(f"Could not read config file '{path}': {e}")
 
