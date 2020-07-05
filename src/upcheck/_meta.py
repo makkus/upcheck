@@ -4,4 +4,4 @@ from typing import Any, Dict
 
 app_name = "upcheck"
 
-pyinstaller: Dict[str, Any] = {}
+pyinstaller: Dict[str, Any] = {"resources": []}

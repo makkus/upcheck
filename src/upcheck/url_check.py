@@ -9,8 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Union
 from urllib.parse import ParseResult
 
-import aiohttp
-from aiohttp import ClientError, ClientResponseError
+import httpx
 from anyio import create_task_group
 from rich import box
 from rich.console import Console, ConsoleOptions, RenderResult
@@ -20,17 +19,15 @@ from sortedcontainers import SortedList
 from tzlocal import get_localzone
 
 
-yaml = YAML()
-
-
 class CheckResult(object):
     def __init__(self, url_check: "UrlCheck", start_time: datetime, end_time: datetime):
         """Base class to collect metrics and results for url checks.
 
         Args:
-            url_check (UrlCheck): the check that was performed
-            start_time (datetime): the time the check was kicked off
-            end_time (datetime): the time the check finished
+
+        - *url_check*: the check that was performed
+        - *start_time*: the time the check was kicked off
+        - *end_time*: the time the check finished
         """
 
         self._url_check: UrlCheck = url_check
@@ -65,6 +62,14 @@ class CheckMetric(CheckResult):
     out of the responding servers control (e.g. network issues on the machine
     that runs the check). So, even a '401'-response code would be considered
     a 'successful' check.
+
+    Args:
+
+    - *url_check*: the check that was performed
+    - *start_time*: the time the check was kicked off
+    - *end_time*: the time the check finished
+    - *response_code*: the response code from the remote server
+    - *content*: if successful, the text content of the server response
     """
 
     def __init__(
@@ -149,13 +154,13 @@ class CheckError(CheckResult):
         url_check: "UrlCheck",
         start_time: datetime,
         end_time: datetime,
-        error: ClientError,
+        error: Exception,
     ):
 
         self._error = error
         super().__init__(url_check=url_check, start_time=start_time, end_time=end_time)
 
-    def error(self) -> ClientError:
+    def error(self) -> Exception:
         return self._error
 
     def __rich_console__(
@@ -180,8 +185,9 @@ class UrlCheck(object):
     """Class to represent a single website check job.
 
     Args:
-        url (str): the url to check
-        regex (str): an optional regex
+
+    - url (str): the url to check
+    - regex (str): an optional regex
     """
 
     def __init__(self, url: str, regex: Optional[str] = None):
@@ -221,26 +227,20 @@ class UrlCheck(object):
         html: Optional[str] = None
         response_code: Optional[int] = None
 
-        error: Optional[ClientError] = None
+        error: Optional[Exception] = None
 
         # using advice from: https://stackoverflow.com/questions/2720319/python-figure-out-local-timezone/17363006#17363006
         tz = get_localzone()
         started = tz.localize(datetime.now(), is_dst=None)
 
         try:
-            async with aiohttp.ClientSession() as session:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(self.url)
+                html = response.text
+                response_code = response.status_code
 
-                async with session.get(self.url) as response:
-                    html = await response.text()
-                    response_code = response.status
-
-            if response_code is None:
-                raise Exception("Internal error, no response code")
-
-        except ClientResponseError as cre:
-            response_code = cre.status
-        except ClientError as ce:
-            error = ce
+        except Exception as e:
+            error = e
 
         finished = tz.localize(datetime.now(), is_dst=None)
 
@@ -354,6 +354,7 @@ class UrlChecks(object):
             path = Path(os.path.expanduser(path))
 
         try:
+            yaml = YAML()
             content = yaml.load(path)
         except Exception as e:
             raise Exception(f"Could not read config file '{path}': {e}")

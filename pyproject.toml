@@ -27,11 +27,12 @@ exclude = '''
 output_dir = "site"
 modules = [
 "upcheck",
+"upcheck.defaults"
 ]
 extra_markdown_extensions = [
   "attr_list"
 ]
-include_reference_documentation = false
+include_reference_documentation = true
 [tool.portray.mkdocs.theme]
 name = "material"
 palette = {primary = "blue grey", accent = "pink"}
