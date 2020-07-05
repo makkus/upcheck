@@ -52,6 +52,8 @@ function prepare () {
     source "${venv_path}/bin/activate"
     pip install -U --extra-index-url https://pkgs.frkl.io/frkl/dev "${project_root}[all]"
 
+    deactivate
+
     mkdir -p "${output_dir}"
 
 }
@@ -192,7 +194,6 @@ function main () {
 #            docker run -v "${THIS_DIR}/../:/src/" freckles-build-debian
 
         else
-
             prepare "${build_dir}" "${venv_name}" "${python_version}" "${pyinstaller_version}" "${requirements_file}" "${project_root}" "${output_dir}"
             build_artifact "${project_root}" "${build_dir}" "${venv_path}" "${output_dir}" "${OSTYPE}" "${spec_file}"
 

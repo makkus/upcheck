@@ -2,8 +2,11 @@
 from typing import Tuple
 
 import asyncclick as click
+from rich.console import Console
 from upcheck.url_check import UrlChecks
 
+
+console = Console()
 
 try:
     import uvloop
@@ -32,7 +35,7 @@ async def check(ctx, check_urls: Tuple[str]):
     results = await url_checks.perform_checks()
 
     for r in results:
-        print(r)
+        console.print(r)
 
 
 if __name__ == "__main__":

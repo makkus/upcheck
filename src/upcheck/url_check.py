@@ -1,26 +1,43 @@
 # -*- coding: utf-8 -*-
 import collections
 import os
+import re
 import urllib
 from datetime import datetime
+from functools import total_ordering
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Union
 from urllib.parse import ParseResult
 
 import aiohttp
 from aiohttp import ClientError, ClientResponseError
+from anyio import create_task_group
+from rich import box
+from rich.console import Console, ConsoleOptions, RenderResult
+from rich.table import Table
 from ruamel.yaml import YAML
+from sortedcontainers import SortedList
+from tzlocal import get_localzone
 
 
 yaml = YAML()
 
 
 class CheckResult(object):
-    def __init__(self, url_check: "UrlCheck", start_time: datetime, duration_ms: int):
+    def __init__(self, url_check: "UrlCheck", start_time: datetime, end_time: datetime):
+        """Base class to collect metrics and results for url checks.
 
-        self._url_check = url_check
-        self._start_time = start_time
-        self._duration_ms = duration_ms
+        Args:
+            url_check (UrlCheck): the check that was performed
+            start_time (datetime): the time the check was kicked off
+            end_time (datetime): the time the check finished
+        """
+
+        self._url_check: UrlCheck = url_check
+        self._start_time: datetime = start_time
+        self._end_time: datetime = end_time
+
+        self._report_data: Optional[Mapping[str, Any]] = None
 
     @property
     def url_check(self) -> "UrlCheck":
@@ -31,32 +48,37 @@ class CheckResult(object):
         return self._start_time
 
     @property
-    def duration_ms(self) -> int:
-        return self._duration_ms
+    def response_time(self) -> int:
+        delta = self._end_time - self._start_time
+        duration_ms = int(delta.total_seconds() * 1000)
+        return duration_ms
 
     def __repr__(self):
 
-        return f"({self.__class__.__name__}: url={self.url_check.url} duration={self.duration_ms}"
+        return f"({self.__class__.__name__}: url={self.url_check.url} response_time={self.response_time} ms"
 
 
 class CheckMetric(CheckResult):
     """Class to hold metrics for successful checks.
+
+    Successful, in this context, means there were no underlying problems
+    out of the responding servers control (e.g. network issues on the machine
+    that runs the check). So, even a '401'-response code would be considered
+    a 'successful' check.
     """
 
     def __init__(
         self,
         url_check: "UrlCheck",
-        response_code: int,
         start_time: datetime,
-        duration_ms: int,
+        end_time: datetime,
+        response_code: int,
         content: Optional[str],
     ):
 
         self._response_code: int = response_code
         self._content: Optional[str] = content
-        super().__init__(
-            url_check=url_check, start_time=start_time, duration_ms=duration_ms
-        )
+        super().__init__(url_check=url_check, start_time=start_time, end_time=end_time)
 
     @property
     def response_code(self) -> int:
@@ -65,6 +87,52 @@ class CheckMetric(CheckResult):
     @property
     def content(self) -> Optional[str]:
         return self._content
+
+    @property
+    def regex_matched(self) -> Optional[bool]:
+
+        if not self.url_check.regex:
+            return None
+
+        if not self.content:
+            return False
+
+        # UNSURE: maybe only check if response code indicates success?
+        result = re.search(self.url_check.regex, self.content)
+        return True if result else False
+
+    @property
+    def report_data(self) -> Mapping[str, Any]:
+
+        if self._report_data is None:
+            self._report_data = {
+                "url": self._url_check.url,
+                "check_time": self.start_time,
+                "response_code": self.response_code,
+                "response_time": self.response_time,
+                "regex_matched": self.regex_matched,
+            }
+        return self._report_data
+
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+
+        table = Table(show_header=False, box=box.SIMPLE)
+        table.add_column("Attribute")
+        table.add_column("Value", style="italic")
+
+        table.add_row("url", self.url_check.url)
+
+        table.add_row("started", str(self.start_time))
+        table.add_row("response time", f"{self.response_time} ms")
+        table.add_row("response code", str(self.response_code))
+        if self.regex_matched is None:
+            table.add_row("regex matched", "n/a")
+        else:
+            table.add_row("regex matched", "true" if self.regex_matched else "false")
+
+        yield table
 
 
 class CheckError(CheckResult):
@@ -79,38 +147,51 @@ class CheckError(CheckResult):
     def __init__(
         self,
         url_check: "UrlCheck",
-        error: ClientError,
         start_time: datetime,
-        duration_ms: int,
+        end_time: datetime,
+        error: ClientError,
     ):
 
         self._error = error
+        super().__init__(url_check=url_check, start_time=start_time, end_time=end_time)
 
     def error(self) -> ClientError:
         return self._error
 
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
 
+        table = Table(show_header=False, box=box.SIMPLE)
+        table.add_column("Attribute")
+        table.add_column("Value", style="italic")
+
+        table.add_row("url", self.url_check.url)
+
+        table.add_row("started", str(self.start_time))
+        table.add_row("response time", f"{self.response_time} ms")
+        table.add_row("error", str(self.error()))
+
+        yield table
+
+
+@total_ordering
 class UrlCheck(object):
     """Class to represent a single website check job.
 
     Args:
         url (str): the url to check
-        seconds_between_checks (int): the time between two checks of the same url
-        regexes_to_check (str): an optional regex
+        regex (str): an optional regex
     """
 
-    def __init__(
-        self,
-        url: str,
-        seconds_between_checks: int = 60,
-        regex_to_check: Optional[str] = None,
-    ):
+    def __init__(self, url: str, regex: Optional[str] = None):
 
         # parse url, raises error if invalid. save so we can potentially later group checks by the netloc attribute
         if not url:
             raise ValueError("Can't create url check, no url provided.")
 
         self._parsed_url: ParseResult = urllib.parse.urlparse(url)
+
         if not self._parsed_url.scheme:
             raise ValueError(f"Can't create url check, invalid url (no scheme): {url}")
         if not self._parsed_url.netloc:
@@ -118,9 +199,7 @@ class UrlCheck(object):
                 f"Can't create url check, invalid url (no/invalid domain name): {url}"
             )
         self._url: str = url
-
-        self._seconds_between_checks: int = seconds_between_checks
-        self._regex: Optional[str] = regex_to_check
+        self._regex: Optional[str] = regex
 
     @property
     def url(self) -> str:
@@ -128,12 +207,7 @@ class UrlCheck(object):
         return self._url
 
     @property
-    def seconds_between_checks(self) -> int:
-        """The time between checks (in seconds)."""
-        return self._seconds_between_checks
-
-    @property
-    def regex_to_check(self) -> Optional[str]:
+    def regex(self) -> Optional[str]:
         """An optional regex to check the content of a (successful) check against."""
         return self._regex
 
@@ -144,11 +218,14 @@ class UrlCheck(object):
             CheckResult: the result object, populated with the details of the check
         """
 
-        started = datetime.now()
         html: Optional[str] = None
         response_code: Optional[int] = None
 
         error: Optional[ClientError] = None
+
+        # using advice from: https://stackoverflow.com/questions/2720319/python-figure-out-local-timezone/17363006#17363006
+        tz = get_localzone()
+        started = tz.localize(datetime.now(), is_dst=None)
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -165,32 +242,48 @@ class UrlCheck(object):
         except ClientError as ce:
             error = ce
 
-        finished = datetime.now()
-        delta = finished - started
-        duration_ms = int(delta.total_seconds() * 1000)
+        finished = tz.localize(datetime.now(), is_dst=None)
 
         if error:
             result: CheckResult = CheckError(
-                url_check=self, error=error, start_time=started, duration_ms=duration_ms
+                url_check=self, start_time=started, end_time=finished, error=error
             )
         else:
             result = CheckMetric(
                 url_check=self,
-                response_code=response_code,  # type: ignore
                 start_time=started,
-                duration_ms=duration_ms,
+                end_time=finished,
+                response_code=response_code,  # type: ignore
                 content=html,
             )
 
         return result
 
+    def __eq__(self, other):
+
+        if not isinstance(other, self.__class__):
+            return False
+
+        return (self.url, self.regex) == (other.url, other.regex)
+
+    def __hash__(self):
+
+        return hash((self.url, self.regex))
+
+    def __lt__(self, other):
+
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+
+        return (self.url, self.regex) < (other.url, other.regex)
+
     def __repr__(self):
 
-        if not self.regex_to_check:
+        if not self.regex:
             regex_string = ""
         else:
-            regex_string = f"regex={self.regex_to_check}"
-        return f"(UrlCheck: url={self.url} recheck={self.seconds_between_checks}{regex_string})"
+            regex_string = f"regex={self.regex}"
+        return f"(UrlCheck: url={self.url}{regex_string})"
 
 
 class UrlChecks(object):
@@ -239,7 +332,8 @@ class UrlChecks(object):
             check = UrlCheck(**config)
             checks.append(check)
 
-        return UrlChecks(*checks)
+        result = UrlChecks(*checks)
+        return result
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> Iterable[Mapping[str, Any]]:
@@ -260,7 +354,6 @@ class UrlChecks(object):
             path = Path(os.path.expanduser(path))
 
         try:
-
             content = yaml.load(path)
         except Exception as e:
             raise Exception(f"Could not read config file '{path}': {e}")
@@ -287,22 +380,33 @@ class UrlChecks(object):
 
         return configs
 
-    def __init__(self, *url_checks: UrlCheck):
+    def __init__(self, *url_checks: UrlCheck, seconds_between_checks: int = 60):
 
-        self._url_checks: Iterable[UrlCheck] = url_checks
+        self._url_checks: Set[UrlCheck] = set(url_checks)
+        self._seconds_between_checks: int = seconds_between_checks
+
+    @property
+    def seconds_between_checks(self) -> int:
+        """The time between checks (in seconds)."""
+        return self._seconds_between_checks
 
     @property
     def url_checks(self) -> Iterable[UrlCheck]:
         return self._url_checks
 
-    async def perform_checks(self) -> Iterable[CheckResult]:
+    async def perform_checks(self) -> List[CheckResult]:
 
-        results: List[CheckResult] = []
-        for check in self.url_checks:
+        results: SortedList[CheckResult] = SortedList(
+            key=lambda x: (x.start_time, x.url_check)
+        )
 
-            print(f"checking: {check.url}")
-            result = await check.perform_check()
-            results.append(result)
+        async def run_check(_check: UrlCheck):
+            result = await _check.perform_check()
+            results.add(result)
+
+        async with create_task_group() as tg:
+            for check in self.url_checks:
+                await tg.spawn(run_check, check)
 
         return results
 
