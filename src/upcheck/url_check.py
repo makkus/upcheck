@@ -394,7 +394,7 @@ class UrlChecks(object):
     def url_checks(self) -> Iterable[UrlCheck]:
         return self._url_checks
 
-    async def perform_checks(self) -> SortedList[CheckResult]:
+    async def perform_checks(self) -> "SortedList[CheckResult]":
 
         results: SortedList[CheckResult] = SortedList(
             key=lambda x: (x.start_time, x.url_check)
