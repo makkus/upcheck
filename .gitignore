@@ -56,3 +56,4 @@ site
 .dephell_report
 .direnv
 .mypy_cache
+.env

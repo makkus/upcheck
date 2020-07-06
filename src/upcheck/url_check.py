@@ -200,6 +200,7 @@ class UrlCheck(object):
 
         if not self._parsed_url.scheme:
             raise ValueError(f"Can't create url check, invalid url (no scheme): {url}")
+
         if not self._parsed_url.netloc:
             raise ValueError(
                 f"Can't create url check, invalid url (no/invalid domain name): {url}"
@@ -211,6 +212,14 @@ class UrlCheck(object):
     def url(self) -> str:
         """The url to check."""
         return self._url
+
+    @property
+    def id(self) -> str:
+
+        if not self.regex:
+            return self.url
+        else:
+            return f"{self.url}_{self.regex}"
 
     @property
     def regex(self) -> Optional[str]:
@@ -381,10 +390,19 @@ class UrlChecks(object):
 
         return configs
 
-    def __init__(self, *url_checks: UrlCheck, seconds_between_checks: int = 60):
+    def __init__(
+        self,
+        *url_checks: UrlCheck,
+        seconds_between_checks: int = 60,
+        parallel: bool = True,
+    ):
+        """Class to manage check executions and their respective results.
 
+
+        """
         self._url_checks: Set[UrlCheck] = set(url_checks)
         self._seconds_between_checks: int = seconds_between_checks
+        self._parallel: bool = parallel
 
     @property
     def seconds_between_checks(self) -> int:
@@ -405,9 +423,13 @@ class UrlChecks(object):
             result = await _check.perform_check()
             results.add(result)
 
-        async with create_task_group() as tg:
+        if self._parallel:
+            async with create_task_group() as tg:
+                for check in self.url_checks:
+                    await tg.spawn(run_check, check)
+        else:
             for check in self.url_checks:
-                await tg.spawn(run_check, check)
+                await run_check(check)
 
         return results
 
