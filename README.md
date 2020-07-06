@@ -25,10 +25,8 @@ To install `upcheck`, download the appropriate binary from one of the links belo
 Alternatively, use the 'curly' install script for `upcheck`:
 
     > curl https://gitlab.com/makkus/upcheck/-/raw/develop/scripts/install/upcheck.sh | bash
-
     - downloaded upcheck: /home/markus/.local/share/frkl/bin/upcheck  
     - added freckles init in: /home/markus/.profile
-
     > source ~/.profile
 
 
