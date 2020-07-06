@@ -32,7 +32,7 @@ modules = [
 extra_markdown_extensions = [
   "attr_list"
 ]
-include_reference_documentation = true
+include_reference_documentation = false
 [tool.portray.mkdocs.theme]
 name = "material"
 palette = {primary = "blue grey", accent = "pink"}
