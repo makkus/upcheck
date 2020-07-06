@@ -148,7 +148,7 @@ if is_pyinstaller_bundle:
             sys.exit(1)
 
         # path = os.path.realpath(sys.argv[0])
-        path = os.path.realpath(sys.executable)
+        path = os.path.abspath(os.path.realpath(sys.executable))
         # print("exe: {}".format(path))
         # path = os.path.realpath("/home/markus/.local/share/freckles/bin/frecklecute")
 
