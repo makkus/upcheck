@@ -798,14 +798,14 @@ function _frkl_add_to_init_file {
         return 1
     fi
 
-    if ! grep -q '# begin: freckles init' "${path}"  > /dev/null 2>&1 ; then
+    if ! grep -q '# begin: frkl init' "${path}"  > /dev/null 2>&1 ; then
         # shellcheck disable=SC2129
         echo "" >> "${path}"
-        echo "# begin: freckles init" >> "${path}"
-        echo "export FRKLLES_PATH=${FRKL_BIN_DIR}" >> "${path}"
+        echo "# begin: frkl init" >> "${path}"
+        echo "export FRKL_PATH=${FRKL_BIN_DIR}" >> "${path}"
         cat <<"EOF" >> "${path}"
-if [ -d "$FRKLLES_PATH" ]; then
-    PATH="$PATH:$FRKLLES_PATH"
+if [ -d "$FRKL_PATH" ]; then
+    PATH="$PATH:$FRKL_PATH"
 fi
 # end: freckles init
 EOF
@@ -903,7 +903,7 @@ function _frkl_main {
 
     # only execute if command is provided, otherwise install in $FRKL_LINK_BIN_PATH
     if [[ "$FRKL_EXECUTABLE_NAME" == "__FRKL_EXE_NOT_SET__" ]]; then
-        _frkl_output "No command provided, doing nothing. You might have to execute ' source ~/.profile' in order to have the 'freckles' executables in your PATH."
+        _frkl_output "No command provided, doing nothing. You might have to execute ' source ~/.profile' in order to have the 'upcheck' executables in your PATH."
         _frkl_show_cursor
         return 0
     else

@@ -16,9 +16,16 @@
 
 ## Downloads
 
+To install `upcheck`, download the appropriate binary from one of the links below, and set the downloaded file to be executable (``chmod +x upcheck``):
+
   - [Linux](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/linux-gnu/upcheck)
   - [Windows](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/windows/upcheck.exe) -- not tested at all
   - [Mac OS X](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/darwin/upcheck) -- not available (yet)
+
+Alternatively, use the 'curly' install script for `upcheck`:
+
+    curl https://gitlab.com/makkus/upcheck/-/raw/develop/scripts/install/upcheck.sh | bash
+    source ~/.profile
 
 ## Description
 

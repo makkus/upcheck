@@ -193,7 +193,7 @@ if is_pyinstaller_bundle:
         try:
             st = os.stat(temp_path)
             os.chmod(temp_path, st.st_mode | stat.S_IEXEC)
-            click.echo(f"updating {app_name} binary: {app_name}".format(path))
+            click.echo(f"updating {app_name} binary: {path}")
             os.rename(path, orig_path)
             os.rename(temp_path, path)
         except Exception() as e:
