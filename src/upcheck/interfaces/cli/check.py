@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""'check' sub-command for upcheck."""
+
 import logging
 from typing import Iterable, List, Optional, Tuple
 
@@ -13,8 +15,10 @@ from upcheck.url_check import UrlCheck
 log = logging.getLogger("upcheck")
 
 
-@command.command()
-@click.argument("check_urls", nargs=-1, required=True)
+@command.command(short_help="run checks against websites")
+@click.argument(
+    "check_urls", nargs=-1, required=True, metavar="CHECK_ITEM [CHECK_ITEM] ..."
+)
 @click.option(
     "--terminal",
     "-t",
@@ -29,12 +33,27 @@ log = logging.getLogger("upcheck")
         exists=True, dir_okay=False, file_okay=True, readable=True, resolve_path=True
     ),
 )
+@click.option(
+    "--repeat",
+    type=int,
+    required=False,
+    help="run checks repeatedly, with the value of this option as time between checks (in seconds)",
+)
 @click.option("--parallel", "-p", help="run checks in parallel", is_flag=True)
 @click.pass_context
 @handle_exc
 async def check(
-    ctx, check_urls: Tuple[str], target: Tuple[str], parallel: bool, terminal: bool
+    ctx,
+    check_urls: Tuple[str],
+    target: Tuple[str],
+    parallel: bool,
+    terminal: bool,
+    repeat: None,
 ):
+    """Run checks against websites.
+
+    Runs one or
+    """
 
     _targets: List[CheckTarget] = []
 
@@ -60,7 +79,10 @@ async def check(
         console.print(" -> all targets connected")
 
         console.print("- starting checks")
-        await upcheck.perform_checks()
+        if repeat is not None and repeat > 0:
+            console.print("   -> press 'q' to stop the checks")
+
+        await upcheck.perform_checks(repeat=repeat)
         console.print(" -> all checks finished")
 
     finally:

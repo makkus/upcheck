@@ -809,7 +809,7 @@ if [ -d "$FRKL_PATH" ]; then
 fi
 # end: freckles init
 EOF
-        _frkl_output "- added freckles init in: ${path}"
+        _frkl_output "- added init section to: ${path}"
     fi
     return 0
 }

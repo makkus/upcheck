@@ -12,7 +12,7 @@ from upcheck.targets.terminal import TerminalTarget
 log = logging.getLogger("upcheck")
 
 
-@command.command()
+@command.command(short_help="listen to a Kafka topic for check events")
 @click.option(
     "--source",
     "-s",
@@ -40,6 +40,10 @@ log = logging.getLogger("upcheck")
 @click.pass_context
 @handle_exc
 async def listen(ctx, source: str, target: Tuple[str], terminal: bool):
+    """Listen to a Kafka topic that contains data about website checks, and forward that data to one or several targets.
+
+
+    """
 
     targets: List[CheckTarget] = []
     if not target:

@@ -116,5 +116,12 @@ def handle_exc(func, exit=True, exit_code=1):
 @logzero_option(default_verbosity="INFO")
 @click.pass_context
 def command(ctx):
+    """'upcheck' lets you check websites for their status and response times and redirect the collected data to specific targets (e.g. kafka, postgres).
+
+    You can either do one-off checks, or repeat the checks using a custom interval. For more details, issue 'upcheck check --help'.
+
+    In addition, 'upcheck' can listen to a Kafka topic, and forward metric-result-events to a target (e.g. a postgres database). More details via 'upcheck listen --help'.
+
+    """
 
     log.debug("Starting upcheck cli...")

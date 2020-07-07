@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
+import anyio
+from rich.console import Console
 from sortedcontainers import SortedList
 from upcheck.exceptions import UpcheckException
 from upcheck.targets import CheckTarget
 from upcheck.url_check import CheckResult, UrlCheck, UrlChecks
+from upcheck.utils.callables import wait_for_tasks_or_user_keypress
 
 
 log = logging.getLogger("upcheck")
@@ -64,7 +67,27 @@ class Upcheck(object):
             except Exception as e:
                 log.warning(f"Failed to disconnect target '{_target.get_id()}': {e}")
 
-    async def perform_checks(self) -> "SortedList[CheckResult]":
+    async def perform_checks(
+        self, repeat: Optional[int] = None, console: Optional[Console] = None
+    ) -> "SortedList[CheckResult]":
+
+        if repeat is None or repeat <= 0:
+            return await self.perform_checks_once()
+
+        all_checks: SortedList[CheckResult] = []
+
+        async def check():
+
+            while True:
+                results = await self.perform_checks_once()
+                all_checks.extend(results)
+                await anyio.sleep(repeat)
+
+        await wait_for_tasks_or_user_keypress({"func": check}, console=console)
+
+        return all_checks
+
+    async def perform_checks_once(self) -> "SortedList[CheckResult]":
 
         results: SortedList[CheckResult] = await self._url_checks.perform_checks()
 

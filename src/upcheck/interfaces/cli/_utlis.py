@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Utils to make the command-line interface a bit prettier."""
+
 import logging
 import os
 
@@ -20,8 +22,8 @@ def configure_logger(*logger_names: str, **kwargs):
 
     Args:
 
-    - logger_names (list): a list of logger names
-    - kwargs (dict): optional properties to use for configuration
+        logger_names (Iterable[str]): a list of logger names
+        **kwargs: optional properties to use for configuration
     """
 
     verbosity = kwargs.get("verbosity", logging.WARN)
@@ -55,6 +57,7 @@ def configure_logger(*logger_names: str, **kwargs):
 
 
 def check_env(**kwargs):
+    """Add logfile if env var is present."""
 
     if "logfile" not in kwargs.keys():
 
@@ -66,6 +69,7 @@ def check_env(**kwargs):
 
 
 def logzero_option(*logger_names, **kwargs):
+    """Asyncclick option to control log level."""
 
     kwargs = check_env(**kwargs)
 

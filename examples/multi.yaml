@@ -1,0 +1,3 @@
+- https://google.com
+- url: https://cloudflare.com
+  regex: 'Cloudflare\sMagic'

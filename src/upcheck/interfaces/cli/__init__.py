@@ -3,7 +3,13 @@ import asyncclick as click
 
 import upcheck.interfaces.cli.check
 import upcheck.interfaces.cli.listen
-import upcheck.interfaces.cli.self
+
+try:
+    import frtls
+    import upcheck.interfaces.cli.self
+except:
+    pass
+
 from upcheck.interfaces.cli.main import command as cli
 
 
