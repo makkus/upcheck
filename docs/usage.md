@@ -1,4 +1,4 @@
-# 'check' usage
+# Usage
 
 ## Getting help
 
@@ -28,32 +28,12 @@ Its main configuration parameters (``CHECK_ITEM``) are the check details: the we
 *- url*
 :    If no file with a path equalling the specified string exists, the string will be interpretes as a url. In this case a simple website check using that url will be run, without any regex checking.
 
-#### Examples
-
-Check a single website:
-
-{{ cli("upcheck", "check", "https://frkl.io") }}
-
-Check multiple websites:
-
-{{ cli("upcheck", "check", "https://frkl.io/blog/ssh-primer", "https://duckduckgo.com", max_height=200) }}
-
-Check websites specified in a file:
-
-{{ cli("upcheck", "check", "examples/multi.yaml", max_height=200) }}
-
-Where the content for``examples/multi.yaml`` is:
-
-{{ inline_file_as_codeblock("examples/multi.yaml", "yaml") }}
-
-Mix and match:
-
-{{ cli("upcheck", "check", "examples/multi.yaml", "https://frkl.io", max_height=200) }}
 
 
-### Target details
 
-### Other parameters
+#### Target details
+
+#### Other parameters
 
 In addition to the check and target details, you can specify some check parameters:
 
@@ -62,6 +42,42 @@ In addition to the check and target details, you can specify some check paramete
 ``--paralell``
 :    Whether to run the checks in parallel. This should be ok for a small number of sites to check, but might skew your response time results in case you run hundreds of checks.
 
+### Examples
+
+#### Check a single website
+
+{{ cli("upcheck", "check", "https://frkl.io") }}
+
+#### Check multiple websites
+
+{{ cli("upcheck", "check", "https://frkl.io/blog/ssh-primer", "https://duckduckgo.com", max_height=200) }}
+
+#### Check websites using a config file
+
+{{ cli("upcheck", "check", "examples/multi.yaml", max_height=200) }}
+
+Where the content for``examples/multi.yaml`` is:
+
+{{ inline_file_as_codeblock("examples/multi.yaml", "yaml") }}
+
+#### Mix and match file and url config
+
+{{ cli("upcheck", "check", "examples/multi.yaml", "https://frkl.io", max_height=200) }}
+
+#### Check a single site, send results to Kafka
+
+``` console
+> upcheck check --target examples/kafka.yaml https://frkl.io
+...
+...
+```
+
+With a ``kafka.yaml`` config file like:
+
+{{ inline_file_as_codeblock("examples/kafka.yaml", "yaml") }}
+
 ## sub-command: ``listen``
 
 asdf
+
+### Source details

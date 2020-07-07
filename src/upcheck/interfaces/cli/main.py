@@ -122,6 +122,7 @@ def command(ctx):
 
     In addition, 'upcheck' can listen to a Kafka topic, and forward metric-result-events to a target (e.g. a postgres database). More details via 'upcheck listen --help'.
 
+    For more information visit the 'upcheck' documentation: https://makkus.gitlab.io/upcheck
     """
 
     log.debug("Starting upcheck cli...")

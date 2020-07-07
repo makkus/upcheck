@@ -9,6 +9,11 @@
 
 *Collect website accessability metrics*
 
+## Description
+
+`upcheck` checks whether websites are up, how long they take to response, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
+
+
 ## Links
 
 - [Documentation](https://makkus.gitlab.io/upcheck/)
@@ -18,30 +23,15 @@
 
 ### Binaries
 
-To install `upcheck`, download the appropriate binary from one of the links below, and set the downloaded file to be executable (``chmod +x upcheck``):
-
   - [Linux](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/linux-gnu/upcheck)
   - [Windows](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/windows/upcheck.exe) -- not tested at all
   - [Mac OS X](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/darwin/upcheck) -- not available (yet)
 
-### Install script  
-
-Alternatively, use the 'curly' install script for `upcheck`:
-
-    > curl https://gitlab.com/makkus/upcheck/-/raw/develop/scripts/install/upcheck.sh | bash
-    - downloaded upcheck: /home/markus/.local/share/frkl/bin/upcheck  
-    - added init section to: /home/markus/.profile
-    > source ~/.profile
-
-### Update
+## Update
 
 The binary can update itself. To do that, issue:
 
     > upcheck self update
-
-## Description
-
-`upcheck` checks whether websites are up, how long they take to response, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
 
 # Development
 

@@ -42,7 +42,9 @@ log = logging.getLogger("upcheck")
 async def listen(ctx, source: str, target: Tuple[str], terminal: bool):
     """Listen to a Kafka topic that contains data about website checks, and forward that data to one or several targets.
 
+    Both source and target parameters are paths to files that contain information about the respective item.
 
+    For details about the Kafka source configuration, please visit https://makkus.gitlab.io/upcheck/docs/usage/#source-details. For information on how to specify the targets, visit https://makkus.gitlab.io/upcheck/docs/usage/#target-details
     """
 
     targets: List[CheckTarget] = []

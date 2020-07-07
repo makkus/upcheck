@@ -52,7 +52,9 @@ async def check(
 ):
     """Run checks against websites.
 
-    Runs one or
+    Runs one or several website checks. A 'CHECK_ITEM' can either be a url of a website to check, or the path to a file containing a yaml list with websites to check (see https://makkus.gitlab.io/upcheck/docs/usage/#checks-configuration for details).
+
+    You can specify one or several targets to send check results to with the '--target' option. If no target is specified, the details will be printed to the terminal. For more information on targets check out https://makkus.gitlab.io/upcheck/docs/usage/#target-details
     """
 
     _targets: List[CheckTarget] = []
@@ -78,7 +80,10 @@ async def check(
         await upcheck.connect()
         console.print(" -> all targets connected")
 
-        console.print("- starting checks")
+        msg = "- starting checks"
+        if target:
+            msg += ", sending results to targets"
+        console.print(msg)
         if repeat is not None and repeat > 0:
             console.print("   -> press 'q' to stop the checks")
 

@@ -14,10 +14,13 @@ To install `upcheck`, download the appropriate binary from one of the links belo
 
 Alternatively, use the 'curly' install script for `upcheck`:
 
-    > curl https://gitlab.com/makkus/upcheck/-/raw/develop/scripts/install/upcheck.sh | bash
-    - downloaded upcheck: /home/markus/.local/share/frkl/bin/upcheck  
-    - added init section to: /home/markus/.profile
-    > source ~/.profile
+    curl https://gitlab.com/makkus/upcheck/-/raw/develop/scripts/install/upcheck.sh | bash
+
+This will add a section to your shell init file to add the install location (``$HOME/.local/share/frkl/bin``) to your ``$PATH``.  
+
+You might need to source that file (or log out and re-log in to your session) in order to be able to use *upcheck*:
+
+    source ~/.profile
 
 ## Python package
 
@@ -34,12 +37,18 @@ Collecting upcheck
 ...
 ...
 Successfully installed aiokafka-0.6.0 aiopg-1.0.0 ... ... ...
->
+> upcheck --help
+Usage: upcheck [OPTIONS] COMMAND [ARGS]...
 
-```  
+  'upcheck' lets you check websites for their status ...
+   ...
+   ...
+```
+
+*Note*: When installing *upcheck* via this method, the ``self`` sub-command is not available.
 
 # Update
 
-The binary can update itself. To do that, issue:
+The binary version (aka: when installed manually or via the install script) can update itself. To do that, issue:
 
     > upcheck self update
