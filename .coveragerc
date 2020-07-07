@@ -1,13 +1,14 @@
 # .coveragerc to control coverage.py
 [run]
+source = src
+omit = *tests*
 branch = True
-source = upcheck
-# omit = bad_file.py
 
-[paths]
-source =
-    src/
-    */site-packages/
+
+#[paths]
+#source =
+#    src/upcheck
+#    */site-packages/
 
 [report]
 # Regexes for lines to exclude from consideration

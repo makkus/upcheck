@@ -31,7 +31,7 @@
 
 The binary can update itself. To do that, issue:
 
-    > upcheck self update
+    upcheck self update
 
 # Development
 
@@ -48,10 +48,10 @@ Notes:
 - if not using [direnv](https://direnv.net), you have to setup and activate your Python virtualenv yourself, manually, before running ``make init``
 
 ```
-> git clone https://gitlab.com/frkl/upcheck
-> cd upcheck
-> direnv allow   # if using direnv, otherwise activate virtualenv
-> make init
+git clone https://gitlab.com/makkus/upcheck
+cd upcheck
+direnv allow   # if using direnv, otherwise activate virtualenv
+make init
 ```
 
 ## ``make`` targets
@@ -71,10 +71,10 @@ For details (and other, minor targets), check the ``Makefile``.
 
 This project uses [cruft](https://github.com/timothycrosley/cruft) to apply updates to [the base Python project template](https://gitlab.com/frkl/template-python-project) to this repository. Check out it's documentation for more information.
 
-    > cruft update
+    cruft update
     # interactively approve changes, make changes if necessary
-    > git add *
-    > git commit -m "chore: updated project from template"
+    git add *
+    git commit -m "chore: updated project from template"
 
 
 
