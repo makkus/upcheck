@@ -414,6 +414,15 @@ class UrlCheck(object):
 
 
 class UrlChecks(object):
+    @classmethod
+    def create_checks(
+        cls, *url_or_config_file_paths: Union[Path, str, Mapping[str, Any]]
+    ) -> "UrlChecks":
+
+        checks = UrlCheck.create_checks(*url_or_config_file_paths)
+        url_checks = UrlChecks(*checks)
+        return url_checks
+
     def __init__(
         self,
         *url_checks: UrlCheck,
