@@ -1,0 +1,31 @@
+{
+  "namespace": "io.frkl.upcheck.check_metric",
+  "type": "record",
+  "name": "CheckMetric",
+  "fields": [
+    {
+      "name": "url",
+      "type": "string"
+    },
+    {
+      "name": "check_time",
+      "type": "string"
+    },
+    {
+      "name": "response_code",
+      "type": "int"
+    },
+    {
+      "name": "response_time",
+      "type": "int"
+    },
+    {
+      "name": "regex_matched",
+      "type": ["null","boolean"]
+    },
+    {
+      "name": "regex",
+      "type": ["null", "string"]
+    }
+  ]
+}
