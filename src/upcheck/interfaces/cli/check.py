@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 import asyncclick as click
-from sortedcontainers import SortedList
-from upcheck.db import CheckTarget
 from upcheck.interfaces.cli.main import command, console, handle_exc
-from upcheck.url_check import CheckResult, UrlChecks
+from upcheck.targets import CheckTarget
+from upcheck.targets.terminal import TerminalTarget
+from upcheck.upcheck import Upcheck
+from upcheck.url_check import UrlCheck
 
 
 log = logging.getLogger("upcheck")
@@ -15,42 +16,54 @@ log = logging.getLogger("upcheck")
 @command.command()
 @click.argument("check_urls", nargs=-1, required=True)
 @click.option(
+    "--terminal",
+    "-t",
+    help="display check results in terminal (always on if no other targets specified)",
+    is_flag=True,
+)
+@click.option(
     "--target",
-    help="path to a target config file",
+    help="path to a target config file (multiple targets allowed)",
     multiple=True,
     type=click.Path(
         exists=True, dir_okay=False, file_okay=True, readable=True, resolve_path=True
     ),
 )
+@click.option("--parallel", "-p", help="run checks in parallel", is_flag=True)
 @click.pass_context
 @handle_exc
-async def check(ctx, check_urls: Tuple[str], target: Tuple[str]):
+async def check(
+    ctx, check_urls: Tuple[str], target: Tuple[str], parallel: bool, terminal: bool
+):
 
-    targets: List[CheckTarget] = []
+    _targets: List[CheckTarget] = []
 
+    if not target:
+        terminal = True
+    if terminal:
+        _t = TerminalTarget()
+        _targets.append(_t)
     for t in target:
-        _t = CheckTarget.load_from_file(t)
-        targets.append(_t)
+        _t = CheckTarget.create_from_file(t)
+        _targets.append(_t)
 
+    url_checks: Iterable[UrlCheck] = UrlCheck.create_checks(*check_urls)
+
+    upcheck: Optional[Upcheck] = None
     try:
-        for _target in targets:
-            await _target.connect()
+        upcheck = Upcheck(url_checks=url_checks, targets=_targets, parallel=parallel)
+
+        # connect before starting the checks, so misconfiguration
+        # of targets is picked up before tests are run
+        console.print("- connecting to targets")
+        await upcheck.connect()
+        console.print(" -> all targets connected")
 
         console.print("- starting checks")
-
-        url_checks = UrlChecks.create_checks(*check_urls)
-        results: SortedList[CheckResult] = await url_checks.perform_checks()
-
-        console.print("- checks finished:")
-        for r in results:
-            console.print(r)
-        console.print("- sending results to targets")
-
-        for _target in targets:
-            await _target.write(*results)
-
-        console.print("- results sent")
+        await upcheck.perform_checks()
+        console.print(" -> all checks finished")
 
     finally:
-        for _target in targets:
-            await _target.disconnect()
+
+        if upcheck is not None:
+            await upcheck.disconnect()

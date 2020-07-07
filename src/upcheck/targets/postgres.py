@@ -1,66 +1,11 @@
 # -*- coding: utf-8 -*-
-import collections
-import os
-from abc import ABCMeta, abstractmethod
-from pathlib import Path
-from ssl import SSLContext
-from typing import Optional, Union
+from typing import Optional
 
 import aiopg
 from aiopg import Connection, Cursor
-from ruamel.yaml import YAML
 from upcheck.exceptions import UpcheckException
+from upcheck.targets import CheckTarget
 from upcheck.url_check import CheckMetric
-
-
-class CheckTarget(metaclass=ABCMeta):
-    @classmethod
-    def load_from_file(cls, path: Union[str, Path]):
-
-        if isinstance(path, str):
-            path = Path(os.path.expanduser(path))
-
-        if not path.exists():
-            raise UpcheckException(
-                msg=f"Can't load target config '{path}'", reason="File does not exist"
-            )
-
-        try:
-            yaml = YAML()
-            content = yaml.load(path)
-        except Exception as e:
-            raise UpcheckException(
-                msg=f"Can't load target config '{path.as_posix()}'.",
-                reason="File content not valid yaml.",
-                parent=e,
-            )
-
-        if not isinstance(content, collections.abc.Mapping):
-            raise UpcheckException(
-                msg=f"Can't load target config '{path.as_posix()}'.",
-                reason="File content must be dictionary.",
-            )
-
-        target_type = "postgres"
-        try:
-            target = PostgresTarget(**content)
-        except Exception as e:
-            raise UpcheckException(
-                msg=f"Can't load target config '{path.as_posix()}'.",
-                reason=f"Invalid config for target type '{target_type}: {e}",
-            )
-
-        return target
-
-    async def connect(self) -> None:
-        pass
-
-    async def disconnect(self) -> None:
-        pass
-
-    @abstractmethod
-    async def write(self, *results: CheckMetric) -> None:
-        pass
 
 
 class PostgresTarget(CheckTarget):
@@ -71,7 +16,8 @@ class PostgresTarget(CheckTarget):
         dbname: str,
         host: str = "localhost",
         port: int = 5432,
-        ssl: Union[SSLContext, bool, None] = None,
+        sslmode: Optional[str] = None,
+        sslrootcert: Optional[str] = None,
     ):
 
         self._username: str = username
@@ -79,10 +25,18 @@ class PostgresTarget(CheckTarget):
         self._dbname: str = dbname
         self._host: str = host
         self._port: int = port
-        self._ssl: Union[SSLContext, bool, None] = ssl
+
+        if sslmode is None and sslrootcert:
+            sslmode = "verify-ca"
+        self._sslmode: Optional[str] = sslmode
+        self._sslrootcert: Optional[str] = sslrootcert
 
         self._connection: Optional[Connection] = None
         self._cursor: Optional[Cursor] = None
+
+    def get_id(self) -> str:
+
+        return f"postgres::{self._host}:{self._port}/{self._dbname}"
 
     @property
     def username(self) -> str:
@@ -104,10 +58,6 @@ class PostgresTarget(CheckTarget):
     def port(self) -> int:
         return self._port
 
-    @property
-    def ssl(self) -> Union[SSLContext, bool, None]:
-        return self._ssl
-
     async def connect(self) -> Connection:
 
         if self._connection is not None:
@@ -123,7 +73,8 @@ class PostgresTarget(CheckTarget):
                 user=self.username,
                 password=self.password,
                 dbname=self.database,
-                # sslmode="require",
+                sslmode=self._sslmode,
+                sslrootcert=self._sslrootcert,
             )
         except Exception as e:
             raise UpcheckException(msg="Can't connect to database.", reason=str(e))
@@ -157,7 +108,7 @@ class PostgresTarget(CheckTarget):
             args = (
                 result.url_check.url,
                 result.url_check.regex,
-                result.start_time,
+                result.check_time,
                 result.response_time,
                 result.response_code,
                 result.regex_matched,

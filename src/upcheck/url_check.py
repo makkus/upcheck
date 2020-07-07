@@ -20,19 +20,17 @@ from tzlocal import get_localzone
 
 
 class CheckResult(object):
-    def __init__(self, url_check: "UrlCheck", start_time: datetime, end_time: datetime):
+    def __init__(self, url_check: "UrlCheck", check_time: datetime):
         """Base class to collect metrics and results for url checks.
 
         Args:
 
         - *url_check*: the check that was performed
         - *start_time*: the time the check was kicked off
-        - *end_time*: the time the check finished
         """
 
         self._url_check: UrlCheck = url_check
-        self._start_time: datetime = start_time
-        self._end_time: datetime = end_time
+        self._check_time: datetime = check_time
 
         self._report_data: Optional[Mapping[str, Any]] = None
 
@@ -41,14 +39,8 @@ class CheckResult(object):
         return self._url_check
 
     @property
-    def start_time(self) -> datetime:
-        return self._start_time
-
-    @property
-    def response_time(self) -> int:
-        delta = self._end_time - self._start_time
-        duration_ms = int(delta.total_seconds() * 1000)
-        return duration_ms
+    def check_time(self) -> datetime:
+        return self._check_time
 
     def __repr__(self):
 
@@ -72,39 +64,79 @@ class CheckMetric(CheckResult):
     - *content*: if successful, the text content of the server response
     """
 
-    def __init__(
-        self,
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "CheckMetric":
+
+        url_check = UrlCheck(url=data["url"], regex=data.get("regex", None))
+        metric = CheckMetric(
+            url_check=url_check,
+            check_time=data["check_time"],
+            response_time=data["response_time"],
+            response_code=data["response_code"],
+            regex_matched=data.get("regex_matched", None),
+        )
+
+        return metric
+
+    @classmethod
+    def from_result(
+        cls,
         url_check: "UrlCheck",
-        start_time: datetime,
+        check_time: datetime,
         end_time: datetime,
         response_code: int,
         content: Optional[str],
     ):
 
+        delta = end_time - check_time
+        response_time = int(delta.total_seconds() * 1000)
+
+        if not url_check.regex:
+            regex_matched = None
+        else:
+            if not content:
+                regex_matched = False
+            else:
+                # TODO: maybe only check if response code indicates success?
+                m = re.search(url_check.regex, content)
+                regex_matched = True if m else False
+
+        metric = CheckMetric(
+            url_check=url_check,
+            check_time=check_time,
+            response_time=response_time,
+            response_code=response_code,
+            regex_matched=regex_matched,
+        )
+        return metric
+
+    def __init__(
+        self,
+        url_check: "UrlCheck",
+        check_time: datetime,
+        response_time: int,
+        response_code: int,
+        regex_matched: Optional[bool],
+    ):
+
+        self._response_time: int = response_time
         self._response_code: int = response_code
-        self._content: Optional[str] = content
-        super().__init__(url_check=url_check, start_time=start_time, end_time=end_time)
+        self._regex_matched: Optional[bool] = regex_matched
+
+        super().__init__(url_check=url_check, check_time=check_time)
 
     @property
     def response_code(self) -> int:
         return self._response_code
 
     @property
-    def content(self) -> Optional[str]:
-        return self._content
+    def response_time(self) -> int:
+        return self._response_time
 
     @property
     def regex_matched(self) -> Optional[bool]:
 
-        if not self.url_check.regex:
-            return None
-
-        if not self.content:
-            return False
-
-        # UNSURE: maybe only check if response code indicates success?
-        result = re.search(self.url_check.regex, self.content)
-        return True if result else False
+        return self._regex_matched
 
     @property
     def report_data(self) -> Mapping[str, Any]:
@@ -112,9 +144,10 @@ class CheckMetric(CheckResult):
         if self._report_data is None:
             self._report_data = {
                 "url": self._url_check.url,
-                "check_time": self.start_time,
+                "check_time": self.check_time,
                 "response_code": self.response_code,
                 "response_time": self.response_time,
+                "regex": self.url_check.regex,
                 "regex_matched": self.regex_matched,
             }
         return self._report_data
@@ -129,7 +162,7 @@ class CheckMetric(CheckResult):
 
         table.add_row("url", self.url_check.url)
 
-        table.add_row("started", str(self.start_time))
+        table.add_row("started", str(self.check_time))
         table.add_row("response time", f"{self.response_time} ms")
         table.add_row("response code", str(self.response_code))
         if self.regex_matched is None:
@@ -149,16 +182,10 @@ class CheckError(CheckResult):
     be ignored, since the website that is checked is not responsible for the failure.
     """
 
-    def __init__(
-        self,
-        url_check: "UrlCheck",
-        start_time: datetime,
-        end_time: datetime,
-        error: Exception,
-    ):
+    def __init__(self, url_check: "UrlCheck", check_time: datetime, error: Exception):
 
         self._error = error
-        super().__init__(url_check=url_check, start_time=start_time, end_time=end_time)
+        super().__init__(url_check=url_check, check_time=check_time)
 
     def error(self) -> Exception:
         return self._error
@@ -173,8 +200,7 @@ class CheckError(CheckResult):
 
         table.add_row("url", self.url_check.url)
 
-        table.add_row("started", str(self.start_time))
-        table.add_row("response time", f"{self.response_time} ms")
+        table.add_row("started", str(self.check_time))
         table.add_row("error", str(self.error()))
 
         yield table
@@ -189,6 +215,98 @@ class UrlCheck(object):
     - url (str): the url to check
     - regex (str): an optional regex
     """
+
+    @classmethod
+    def create_checks(
+        cls, *url_or_config_file_paths: Union[Path, str, Mapping[str, Any]]
+    ) -> "Iterable[UrlCheck]":
+        """Create a list of UrlCheck objects from a list of string items.
+
+        A string item can either be the path to a file containing a (yaml) list (check the `from_file` method for format
+        details), or a url for a website to check (in which case it is assumed that no regex check needs to be performed).
+
+        Args:
+            url_or_config_file_paths: the list of website checks
+
+        Returns:
+            Iterable[UrlCheck]: a list of UrlCheck objects
+        """
+
+        configs: List[Mapping[str, Any]] = []
+
+        for url_or_config_file_path in url_or_config_file_paths:
+
+            if isinstance(url_or_config_file_path, Path):
+                _configs: Iterable[Mapping[str, Any]] = cls.from_file(
+                    url_or_config_file_path
+                )
+            elif isinstance(url_or_config_file_path, str):
+                expanded = os.path.realpath(os.path.expanduser(url_or_config_file_path))
+                if os.path.isfile(expanded):
+                    _configs = cls.from_file(url_or_config_file_path)
+                else:
+                    _configs = [{"url": url_or_config_file_path}]
+            elif isinstance(url_or_config_file_path, collections.abc.Mapping):
+                _configs = [url_or_config_file_path]
+            else:
+                raise Exception(
+                    f"Can't create url check, invalid type '{type(url_or_config_file_path)}' for url check item: {url_or_config_file_path}"
+                )
+
+            configs.extend(_configs)
+
+        checks: List[UrlCheck] = []
+        for config in configs:
+            check = UrlCheck(**config)
+            checks.append(check)
+
+        return checks
+
+    @classmethod
+    def from_file(cls, path: Union[str, Path]) -> Iterable[Mapping[str, Any]]:
+        """Parse a (yaml) text file and return containing url check config as a list of dicts.
+
+        The file must contain a yaml list where each item is either:
+        - a string (which will be interpreted as url to check)
+        - a dict with the mandatory 'url' and optional 'seconds_between_checks' and 'regex' keys
+
+        Args:
+            path: the path to a url check config file
+
+        Returns:
+            Iterable[Mapping]: a list with url check config dicts
+        """
+
+        if isinstance(path, str):
+            path = Path(os.path.expanduser(path))
+
+        try:
+            yaml = YAML()
+            content = yaml.load(path)
+        except Exception as e:
+            raise Exception(f"Could not read config file '{path}': {e}")
+
+        if isinstance(content, (str, collections.abc.Mapping)) or not isinstance(
+            content, collections.abc.Iterable
+        ):
+            raise Exception(
+                f"Invalid config for url check in file '{path}', must be list of strings and/or mappings: {content}"
+            )
+
+        configs = []
+        for item in content:
+            if isinstance(item, str):
+                _config: Dict[str, Any] = {"url": item}
+            elif isinstance(item, collections.abc.Mapping):
+                _config = item  # type: ignore
+            else:
+                raise Exception(
+                    f"Invalid config item in file '{path}' (must be string or Mapping, not '{type(item)}'): {item}"
+                )
+
+            configs.append(_config)
+
+        return configs
 
     def __init__(self, url: str, regex: Optional[str] = None):
 
@@ -255,12 +373,12 @@ class UrlCheck(object):
 
         if error:
             result: CheckResult = CheckError(
-                url_check=self, start_time=started, end_time=finished, error=error
+                url_check=self, check_time=started, error=error
             )
         else:
-            result = CheckMetric(
+            result = CheckMetric.from_result(
                 url_check=self,
-                start_time=started,
+                check_time=started,
                 end_time=finished,
                 response_code=response_code,  # type: ignore
                 content=html,
@@ -296,105 +414,11 @@ class UrlCheck(object):
 
 
 class UrlChecks(object):
-    @classmethod
-    def create_checks(
-        cls, *url_or_config_file_paths: Union[Path, str, Mapping[str, Any]]
-    ) -> "UrlChecks":
-        """Create `UrlChecks` object from a list of string items.
-
-        A string item can either be the path to a file containing a (yaml) list (check the `from_file` method for format
-        details), or a url for a website to check (in which case the check defaults will be used (60 seconds between
-        checks, no regex check).
-
-        Args:
-            url_or_config_file_paths: the list of website checks
-
-        Returns:
-            UrlChecks: the UrlChecks object populated with all configured UrlCheck child objects
-        """
-
-        configs: List[Mapping[str, Any]] = []
-
-        for url_or_config_file_path in url_or_config_file_paths:
-
-            if isinstance(url_or_config_file_path, Path):
-                _configs: Iterable[Mapping[str, Any]] = cls.from_file(
-                    url_or_config_file_path
-                )
-            elif isinstance(url_or_config_file_path, str):
-                expanded = os.path.realpath(os.path.expanduser(url_or_config_file_path))
-                if os.path.isfile(expanded):
-                    _configs = cls.from_file(url_or_config_file_path)
-                else:
-                    _configs = [{"url": url_or_config_file_path}]
-            elif isinstance(url_or_config_file_path, collections.abc.Mapping):
-                _configs = [url_or_config_file_path]
-            else:
-                raise Exception(
-                    f"Can't create url check, invalid type '{type(url_or_config_file_path)}' for url check item: {url_or_config_file_path}"
-                )
-
-            configs.extend(_configs)
-
-        checks: List[UrlCheck] = []
-        for config in configs:
-            check = UrlCheck(**config)
-            checks.append(check)
-
-        result = UrlChecks(*checks)
-        return result
-
-    @classmethod
-    def from_file(cls, path: Union[str, Path]) -> Iterable[Mapping[str, Any]]:
-        """Parse a (yaml) text file and return containing url check config as a list of dicts.
-
-        The file must contain a yaml list where each item is either:
-        - a string (which will be interpreted as url to check)
-        - a dict with the mandatory 'url' and optional 'seconds_between_checks' and 'regex' keys
-
-        Args:
-            path: the path to a url check config file
-
-        Returns:
-            Iterable[Mapping]: a list with url check config dicts
-        """
-
-        if isinstance(path, str):
-            path = Path(os.path.expanduser(path))
-
-        try:
-            yaml = YAML()
-            content = yaml.load(path)
-        except Exception as e:
-            raise Exception(f"Could not read config file '{path}': {e}")
-
-        if isinstance(content, (str, collections.abc.Mapping)) or not isinstance(
-            content, collections.abc.Iterable
-        ):
-            raise Exception(
-                f"Invalid config for url check in file '{path}', must be list of strings and/or mappings: {content}"
-            )
-
-        configs = []
-        for item in content:
-            if isinstance(item, str):
-                _config: Dict[str, Any] = {"url": item}
-            elif isinstance(item, collections.abc.Mapping):
-                _config = item  # type: ignore
-            else:
-                raise Exception(
-                    f"Invalid config item in file '{path}' (must be string or Mapping, not '{type(item)}'): {item}"
-                )
-
-            configs.append(_config)
-
-        return configs
-
     def __init__(
         self,
         *url_checks: UrlCheck,
         seconds_between_checks: int = 60,
-        parallel: bool = True,
+        parallel: bool = False,
     ):
         """Class to manage check executions and their respective results.
 
@@ -416,7 +440,7 @@ class UrlChecks(object):
     async def perform_checks(self) -> "SortedList[CheckResult]":
 
         results: SortedList[CheckResult] = SortedList(
-            key=lambda x: (x.start_time, x.url_check)
+            key=lambda x: (x.check_time, x.url_check)
         )
 
         async def run_check(_check: UrlCheck):

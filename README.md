@@ -16,11 +16,15 @@
 
 ## Downloads
 
+### Binaries
+
 To install `upcheck`, download the appropriate binary from one of the links below, and set the downloaded file to be executable (``chmod +x upcheck``):
 
   - [Linux](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/linux-gnu/upcheck)
   - [Windows](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/windows/upcheck.exe) -- not tested at all
   - [Mac OS X](https://s3-eu-west-1.amazonaws.com/dev.dl.frkl.io/darwin/upcheck) -- not available (yet)
+
+### Install script  
 
 Alternatively, use the 'curly' install script for `upcheck`:
 
@@ -29,14 +33,15 @@ Alternatively, use the 'curly' install script for `upcheck`:
     - added freckles init in: /home/markus/.profile
     > source ~/.profile
 
+### Update
 
-No command provided, doing nothing. You might have to execute ' source ~/.profile' in order to have the 'upcheck' executables in your PATH.
+The binary can update itself. To do that, issue:
 
-    source ~/.profile
+    > upcheck self update
 
 ## Description
 
-Documentation still to be done.
+`upcheck` checks whether websites are up, how long they take to response, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
 
 # Development
 
@@ -45,7 +50,7 @@ Documentation still to be done.
 - git
 - [direnv](https://direnv.net/) (optional)
 
-## Quickstart
+## Prepare development environment
 
 Notes:
 
@@ -61,7 +66,7 @@ Notes:
 
 ## ``make`` targets
 
-- ``init``: init development project (install project & dev dependencies & pre-commit hook)
+- ``init``: init development project (install project & dev dependencies into virtualenv, as well as pre-commit git hook)
 - ``binary``: create binary for project (will install *pyenv* -- check ``scripts/build-binary`` for details)
 - ``flake``: run *flake8* tests
 - ``mypy``: run mypy tests
@@ -74,8 +79,7 @@ For details (and other, minor targets), check the ``Makefile``.
 
 ## Update project template
 
-This project uses [cruft](https://github.com/timothycrosley/cruft) to manage the base Python project template. Check
-out it's documentation for more information.
+This project uses [cruft](https://github.com/timothycrosley/cruft) to apply updates to [the base Python project template](https://gitlab.com/frkl/template-python-project) to this repository. Check out it's documentation for more information.
 
     > cruft update
     # interactively approve changes, make changes if necessary

@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 import asyncclick as click
 
+import upcheck.interfaces.cli.check
+import upcheck.interfaces.cli.listen
+import upcheck.interfaces.cli.self
+from upcheck.interfaces.cli.main import command as cli
+
+
 # flake8: noqa
 
 try:
@@ -11,10 +17,6 @@ except Exception:
     pass
 
 click.anyio_backend = "asyncio"
-
-from upcheck.interfaces.cli.main import command as cli
-import upcheck.interfaces.cli.check
-import upcheck.interfaces.cli.self
 
 
 if __name__ == "__main__":
