@@ -41,9 +41,13 @@ def define_env(env):
         if cache_file.is_file():
             stdout = cache_file.read_text()
         else:
-            result = subprocess.check_output(command, env=os_env_vars)
-            stdout = result.decode()
-            cache_file.write_text(stdout)
+            try:
+                result = subprocess.check_output(command, env=os_env_vars)
+                stdout = result.decode()
+                cache_file.write_text(stdout)
+            except Exception as e:
+                print(e)
+                raise e
 
         if print_command:
             stdout = f"> {' '.join(command)}\n{stdout}"
