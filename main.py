@@ -45,8 +45,11 @@ def define_env(env):
                 result = subprocess.check_output(command, env=os_env_vars)
                 stdout = result.decode()
                 cache_file.write_text(stdout)
-            except Exception as e:
-                print(e)
+            except subprocess.CalledProcessError as e:
+                print("stdout:")
+                print(e.stdout)
+                print("stderr:")
+                print(e.stderr)
                 raise e
 
         if print_command:
