@@ -2,21 +2,28 @@
 import os
 
 import pytest
-from upcheck.url_check import CheckMetric, UrlChecks
+from upcheck.models import CheckMetric, UrlCheck
+from upcheck.sources.check import ActualCheckCheckSource
+from upcheck.targets import CollectorCheckTarget
+from upcheck.upcheck import Upcheck
 
 
 RESOURCES_FOLDER = os.path.join(os.path.dirname(__file__), "resources")
 
 
 @pytest.mark.anyio
-async def test_check(httpserver):
+async def test_check_simple(httpserver):
 
     httpserver.expect_request("/abc").respond_with_data("abcdefghijklmnopqrstuvwxyz")
 
-    config_url = f"http://{httpserver.host}:{httpserver.port}/abc"
+    check_url = f"http://{httpserver.host}:{httpserver.port}/abc"
 
-    checks = UrlChecks.create_checks(config_url)
-    result = (await checks.perform_checks())[0]
+    source = ActualCheckCheckSource.create_check_source(check_url)
+    target = CollectorCheckTarget()
+
+    upcheck: Upcheck = Upcheck(source=source, targets=[target])
+    await upcheck.start(wait_for_keypress=False)
+    result = target.results[0]
 
     assert isinstance(result, CheckMetric)
     assert result.response_code == 200
@@ -27,10 +34,18 @@ async def test_check_regex_match(httpserver):
 
     httpserver.expect_request("/abc").respond_with_data("abcdefghijklmnopqrstuvwxyz")
 
-    config_url = f"http://{httpserver.host}:{httpserver.port}/abc"
+    check_url = f"http://{httpserver.host}:{httpserver.port}/abc"
 
-    checks = UrlChecks.create_checks({"url": config_url, "regex": "abc"})
-    result = (await checks.perform_checks())[0]
+    source = ActualCheckCheckSource.create_check_source(
+        {"url": check_url, "regex": "abc"}
+    )
+    target = CollectorCheckTarget()
+
+    upcheck: Upcheck = Upcheck(source=source, targets=[target])
+    await upcheck.start(wait_for_keypress=False)
+    result = target.results[0]
+
+    print(result.__dict__)
 
     assert isinstance(result, CheckMetric)
     assert result.response_code == 200
@@ -42,10 +57,15 @@ async def test_check_regex_no_match(httpserver):
 
     httpserver.expect_request("/abc").respond_with_data("abcdefghijklmnopqrstuvwxyz")
 
-    config_url = f"http://{httpserver.host}:{httpserver.port}/abc"
+    check_url = f"http://{httpserver.host}:{httpserver.port}/abc"
+    source = ActualCheckCheckSource.create_check_source(
+        {"url": check_url, "regex": "asdf"}
+    )
+    target = CollectorCheckTarget()
 
-    checks = UrlChecks.create_checks({"url": config_url, "regex": "azs"})
-    result = (await checks.perform_checks())[0]
+    upcheck: Upcheck = Upcheck(source=source, targets=[target])
+    await upcheck.start(wait_for_keypress=False)
+    result = target.results[0]
 
     assert isinstance(result, CheckMetric)
     assert result.response_code == 200
@@ -73,8 +93,12 @@ async def test_multiple_checks(httpserver):
         url_test,
     ]
 
-    checks = UrlChecks.create_checks(*checks_config)
-    results = await checks.perform_checks()
+    checks = UrlCheck.create_checks(*checks_config)
+    source = ActualCheckCheckSource(*checks)
+    target = CollectorCheckTarget()
+    upcheck: Upcheck = Upcheck(source=source, targets=[target])
+    await upcheck.start(wait_for_keypress=False)
+    results = target.results
 
     assert len(results) == 5
 

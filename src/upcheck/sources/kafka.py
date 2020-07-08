@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import io
 import logging
-from typing import Any, Mapping, Optional
+from typing import Any, AsyncIterator, Mapping, Optional
 
 import avro
 from avro.io import DatumReader
-from upcheck.kafka import CHECK_METRIC_SCHEMA, UpcheckKafkaClient
+from upcheck.models import CheckMetric, CheckResult
 from upcheck.sources import CheckSource
-from upcheck.targets import CheckTarget
-from upcheck.url_check import CheckMetric
+from upcheck.utils.kafka import CHECK_METRIC_SCHEMA, UpcheckKafkaClient
 
 
 CHECK_METRIC_READER = DatumReader(CHECK_METRIC_SCHEMA)
@@ -48,7 +47,7 @@ class KafkaSource(CheckSource):
 
         await self._client.disconnect_consumer()
 
-    async def _start(self, *targets: CheckTarget) -> None:
+    async def start(self) -> AsyncIterator[CheckResult]:  # type: ignore
 
         consumer = await self._client.get_consumer()
 
@@ -62,17 +61,10 @@ class KafkaSource(CheckSource):
 
             try:
                 data: Mapping[str, Any] = CHECK_METRIC_READER.read(decoder)
-                metric: CheckMetric = CheckMetric.from_dict(data)
+                metric: CheckResult = CheckMetric.from_dict(data)
+                yield metric
             except Exception as e:
                 log.error(f"Error parsing message: {e}")
                 continue
 
-            for _t in targets:
-                log.debug(f"Write metric to target: {_t.get_id()}")
-                try:
-                    await _t.write(metric)
-                except Exception as e:
-                    log.error(f"Can't write metric to target '{_t.get_id()}': {e}")
-
-    async def _stop(self) -> None:
-        pass
+        return

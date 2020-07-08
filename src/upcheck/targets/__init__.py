@@ -2,13 +2,14 @@
 import collections
 import logging
 import os
+import uuid
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Union
+from typing import List, Optional, Union
 
 from ruamel.yaml import YAML
 from upcheck.exceptions import UpcheckException
-from upcheck.url_check import CheckMetric
+from upcheck.models import CheckMetric
 
 
 log = logging.getLogger("upcheck")
@@ -96,3 +97,23 @@ class CheckTarget(metaclass=ABCMeta):
 
     def __repr__(self):
         return f"({self.__class__.__name__}: id={self.get_id()}"
+
+
+class CollectorCheckTarget(CheckTarget):
+    def __init__(self, id: Optional[str] = None):
+
+        if id is None:
+            id = str(uuid.uuid4())
+        self._id = id
+        self._results: List[CheckMetric] = []
+
+    def get_id(self) -> str:
+        return self._id
+
+    async def write(self, *results: CheckMetric) -> None:
+
+        self._results.extend(results)
+
+    @property
+    def results(self) -> List[CheckMetric]:
+        return self._results

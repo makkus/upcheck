@@ -6,16 +6,14 @@ import urllib
 from datetime import datetime
 from functools import total_ordering
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
 from urllib.parse import ParseResult
 
 import httpx
-from anyio import create_task_group
 from rich import box
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.table import Table
 from ruamel.yaml import YAML
-from sortedcontainers import SortedList
 from tzlocal import get_localzone
 
 
@@ -406,66 +404,4 @@ class UrlCheck(object):
 
     def __repr__(self):
 
-        if not self.regex:
-            regex_string = ""
-        else:
-            regex_string = f"regex={self.regex}"
-        return f"(UrlCheck: url={self.url}{regex_string})"
-
-
-class UrlChecks(object):
-    @classmethod
-    def create_checks(
-        cls, *url_or_config_file_paths: Union[Path, str, Mapping[str, Any]]
-    ) -> "UrlChecks":
-
-        checks = UrlCheck.create_checks(*url_or_config_file_paths)
-        url_checks = UrlChecks(*checks)
-        return url_checks
-
-    def __init__(
-        self,
-        *url_checks: UrlCheck,
-        seconds_between_checks: int = 60,
-        parallel: bool = False,
-    ):
-        """Class to manage check executions and their respective results.
-
-
-        """
-        self._url_checks: Set[UrlCheck] = set(url_checks)
-        self._seconds_between_checks: int = seconds_between_checks
-        self._parallel: bool = parallel
-
-    @property
-    def seconds_between_checks(self) -> int:
-        """The time between checks (in seconds)."""
-        return self._seconds_between_checks
-
-    @property
-    def url_checks(self) -> Iterable[UrlCheck]:
-        return self._url_checks
-
-    async def perform_checks(self) -> "SortedList[CheckResult]":
-
-        results: SortedList[CheckResult] = SortedList(
-            key=lambda x: (x.check_time, x.url_check)
-        )
-
-        async def run_check(_check: UrlCheck):
-            result = await _check.perform_check()
-            results.add(result)
-
-        if self._parallel:
-            async with create_task_group() as tg:
-                for check in self.url_checks:
-                    await tg.spawn(run_check, check)
-        else:
-            for check in self.url_checks:
-                await run_check(check)
-
-        return results
-
-    def __repr__(self):
-
-        return f"(UrlChecks: {self.url_checks})"
+        return f"(UrlCheck: url={self.url} regex={self.regex})"

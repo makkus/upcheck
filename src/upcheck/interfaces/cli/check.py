@@ -6,10 +6,11 @@ from typing import Iterable, List, Optional, Tuple
 
 import asyncclick as click
 from upcheck.interfaces.cli.main import command, console, handle_exc
+from upcheck.models import UrlCheck
+from upcheck.sources.check import ActualCheckCheckSource
 from upcheck.targets import CheckTarget
 from upcheck.targets.terminal import TerminalTarget
 from upcheck.upcheck import Upcheck
-from upcheck.url_check import UrlCheck
 
 
 log = logging.getLogger("upcheck")
@@ -39,16 +40,10 @@ log = logging.getLogger("upcheck")
     required=False,
     help="run checks repeatedly, with the value of this option as time between checks (in seconds)",
 )
-@click.option("--parallel", "-p", help="run checks in parallel", is_flag=True)
 @click.pass_context
 @handle_exc
 async def check(
-    ctx,
-    check_urls: Tuple[str],
-    target: Tuple[str],
-    parallel: bool,
-    terminal: bool,
-    repeat: None,
+    ctx, check_urls: Tuple[str], target: Tuple[str], terminal: bool, repeat: None
 ):
     """Run checks against websites.
 
@@ -56,6 +51,10 @@ async def check(
 
     You can specify one or several targets to send check results to with the '--target' option. If no target is specified, the details will be printed to the terminal. For more information on targets check out https://makkus.gitlab.io/upcheck/docs/usage/#target-details
     """
+
+    url_checks: Iterable[UrlCheck] = UrlCheck.create_checks(*check_urls)
+
+    _source = ActualCheckCheckSource(*url_checks, repeat=repeat, id="upcheck")
 
     _targets: List[CheckTarget] = []
 
@@ -68,17 +67,15 @@ async def check(
         _t = CheckTarget.create_from_file(t)
         _targets.append(_t)
 
-    url_checks: Iterable[UrlCheck] = UrlCheck.create_checks(*check_urls)
-
     upcheck: Optional[Upcheck] = None
     try:
-        upcheck = Upcheck(url_checks=url_checks, targets=_targets, parallel=parallel)
+        upcheck = Upcheck(source=_source, targets=_targets)
 
         # connect before starting the checks, so misconfiguration
         # of targets is picked up before tests are run
-        console.print("- connecting to targets")
+        console.print("- initializing source and connecting to targets...")
         await upcheck.connect()
-        console.print(" -> all targets connected")
+        console.print(" -> done")
 
         msg = "- starting checks"
         if target:
@@ -87,7 +84,7 @@ async def check(
         if repeat is not None and repeat > 0:
             console.print("   -> press 'q' to stop the checks")
 
-        await upcheck.perform_checks(repeat=repeat)
+        await upcheck.start()
         console.print(" -> all checks finished")
 
     finally:

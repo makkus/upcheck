@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from upcheck.interfaces.cli.main import console
+from upcheck.models import CheckMetric
 from upcheck.targets import CheckTarget
-from upcheck.url_check import CheckMetric
 
 
 class TerminalTarget(CheckTarget):

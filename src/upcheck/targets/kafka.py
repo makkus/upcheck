@@ -4,9 +4,9 @@ from typing import Optional
 
 import avro.schema
 from avro.io import DatumWriter
-from upcheck.kafka import CHECK_METRIC_SCHEMA, UpcheckKafkaClient
+from upcheck.models import CheckMetric
 from upcheck.targets import CheckTarget
-from upcheck.url_check import CheckMetric
+from upcheck.utils.kafka import CHECK_METRIC_SCHEMA, UpcheckKafkaClient
 
 
 CHECK_METRIC_WRITER = DatumWriter(CHECK_METRIC_SCHEMA)

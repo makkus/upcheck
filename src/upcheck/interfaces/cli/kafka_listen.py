@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import asyncclick as click
 from upcheck.interfaces.cli.main import command, console, handle_exc
 from upcheck.sources import CheckSource
 from upcheck.targets import CheckTarget
 from upcheck.targets.terminal import TerminalTarget
+from upcheck.upcheck import Upcheck
 
 
 log = logging.getLogger("upcheck")
@@ -39,7 +40,7 @@ log = logging.getLogger("upcheck")
 )
 @click.pass_context
 @handle_exc
-async def listen(ctx, source: str, target: Tuple[str], terminal: bool):
+async def kafka_listen(ctx, source: str, target: Tuple[str], terminal: bool):
     """Listen to a Kafka topic that contains data about website checks, and forward that data to one or several targets.
 
     Both source and target parameters are paths to files that contain information about the respective item.
@@ -47,32 +48,40 @@ async def listen(ctx, source: str, target: Tuple[str], terminal: bool):
     For details about the Kafka source configuration, please visit https://makkus.gitlab.io/upcheck/docs/usage/#source-details. For information on how to specify the targets, visit https://makkus.gitlab.io/upcheck/docs/usage/#target-details
     """
 
-    targets: List[CheckTarget] = []
+    _source = CheckSource.create_from_file(source, force_source_type="kafka")
+
+    _targets: List[CheckTarget] = []
     if not target:
         terminal = True
 
     if terminal:
         _t = TerminalTarget()
-        targets.append(_t)
+        _targets.append(_t)
 
     for t in target:
         _t = CheckTarget.create_from_file(t)
-        targets.append(_t)
+        _targets.append(_t)
 
-    check_source = CheckSource.create_from_file(source)
-
+    upcheck: Optional[Upcheck] = None
     try:
+        upcheck = Upcheck(source=_source, targets=_targets)
 
-        console.print("- connecting to metric source...")
-        await check_source.connect()
-        console.print("  -> connected")
+        # connect before starting the checks, so misconfiguration
+        # of targets is picked up before tests are run
+        console.print("- initializing kafka client and connecting to targets...")
+        await upcheck.connect()
+        console.print(" -> done")
 
-        console.print(
-            f"- starting to listen for check metrics from '{check_source.get_id()}'..."
-        )
-        console.print("  -> press 'q' to stop")
-        await check_source.start(*targets)
-        console.print("  -> listener stopped")
+        msg = "- starting checks"
+        if target:
+            msg += ", sending results to targets"
+        console.print(msg)
+        console.print("   -> press 'q' to stop the checks")
+
+        await upcheck.start()
+        console.print(" -> all checks finished")
+
     finally:
-        if check_source is not None:
-            await check_source.disconnect()
+
+        if upcheck is not None:
+            await upcheck.disconnect()

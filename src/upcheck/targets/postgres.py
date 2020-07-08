@@ -2,10 +2,10 @@
 from typing import Optional
 
 import aiopg
-from aiopg import Connection, Cursor
+from aiopg import Connection, Pool
 from upcheck.exceptions import UpcheckException
+from upcheck.models import CheckMetric
 from upcheck.targets import CheckTarget
-from upcheck.url_check import CheckMetric
 
 
 class PostgresTarget(CheckTarget):
@@ -31,8 +31,7 @@ class PostgresTarget(CheckTarget):
         self._sslmode: Optional[str] = sslmode
         self._sslrootcert: Optional[str] = sslrootcert
 
-        self._connection: Optional[Connection] = None
-        self._cursor: Optional[Cursor] = None
+        self._pool: Optional[Pool] = None
 
     def get_id(self) -> str:
 
@@ -60,7 +59,7 @@ class PostgresTarget(CheckTarget):
 
     async def connect(self) -> Connection:
 
-        if self._connection is not None:
+        if self._pool is not None:
             raise UpcheckException(
                 msg="Can't connect to database.",
                 reason="Connection already established.",
@@ -86,18 +85,18 @@ class PostgresTarget(CheckTarget):
         if self._connection is not None:
             await self._connection.close()
 
-    async def cursor(self):
+    async def connection(self):
 
-        if self._cursor is None:
-            if self._connection is None:
-                await self.connect()
-            self._cursor = await self._connection.cursor()
-        return self._cursor
+        if self._connection is None:
+            await self.connect()
+        return self._connection
 
     async def _insert(self, query: str, args) -> None:
 
-        cur = await self.cursor()
-        await cur.execute(query, args)
+        # cur = await self.cursor()
+        connection = await self.connection()
+        async with connection.cursor() as cur:
+            await cur.execute(query, args)
 
     async def write(self, *results: CheckMetric) -> None:
 

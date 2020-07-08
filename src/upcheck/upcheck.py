@@ -2,13 +2,13 @@
 import logging
 from typing import Dict, Iterable, Optional
 
-import anyio
+from anyio import create_task_group
 from rich.console import Console
-from sortedcontainers import SortedList
 from upcheck.exceptions import UpcheckException
+from upcheck.models import CheckError, CheckMetric, CheckResult
+from upcheck.sources import CheckSource
 from upcheck.targets import CheckTarget
-from upcheck.url_check import CheckResult, UrlCheck, UrlChecks
-from upcheck.utils.callables import wait_for_tasks_or_user_keypress
+from upcheck.utils.callables import wait_for_tasks, wait_for_tasks_or_user_keypress
 
 
 log = logging.getLogger("upcheck")
@@ -17,12 +17,12 @@ log = logging.getLogger("upcheck")
 class Upcheck(object):
     def __init__(
         self,
-        url_checks: Iterable[UrlCheck],
+        source: CheckSource,
         targets: Iterable[CheckTarget],
-        parallel: bool = False,
+        console: Optional[Console] = None,
     ):
 
-        self._url_checks: UrlChecks = UrlChecks(*url_checks, parallel=parallel)
+        self._source: CheckSource = source
         self._targets: Dict[str, CheckTarget] = {}
         for _t in targets:
             if _t in self._targets.keys():
@@ -32,14 +32,23 @@ class Upcheck(object):
                 )
             self._targets[_t.get_id()] = _t
 
+        if console is None:
+            console = Console()
+        self._console = console
+
     async def connect(self):
+
+        log.debug(f"Trying to connect to source: {self._source.get_id()}")
+
+        await self._source.connect()
+        log.debug("Source connected.")
 
         failed: Dict[CheckTarget, Exception] = {}
         for _target in self._targets.values():
-            log.debug(f"Trying to connect to target: {_target.get_id()}")
+            log.debug(f"Trying to connect to target: {_target.get_id()}...")
             try:
-                log.debug(f"Connecting to target: {_target.get_id()}")
                 await _target.connect()
+                log.debug("Target connected.")
             except Exception as e:
                 failed[_target] = e
         if failed:
@@ -60,40 +69,81 @@ class Upcheck(object):
 
     async def disconnect(self):
 
+        log.debug(f"Disconnecting source {self._source.get_id()}...")
+        await self._source.disconnect()
+        log.debug("Source disconnected.")
+
         for _target in self._targets.values():
 
             try:
+                log.debug(f"Disconnecting target {_target.get_id()}...")
                 await _target.disconnect()
+                log.debug("Target disconnected.")
             except Exception as e:
                 log.warning(f"Failed to disconnect target '{_target.get_id()}': {e}")
 
-    async def perform_checks(
-        self, repeat: Optional[int] = None, console: Optional[Console] = None
-    ) -> "SortedList[CheckResult]":
+    async def start(self, wait_for_keypress: bool = True):
 
-        if repeat is None or repeat <= 0:
-            return await self.perform_checks_once()
+        log.debug("Starting upcheck pipeline...")
 
-        all_checks: SortedList[CheckResult] = []
+        async def watch():
 
-        async def check():
+            async for check_result in self._source.start():
+                await self.write_result(check_result)
 
-            while True:
-                results = await self.perform_checks_once()
-                all_checks.extend(results)
-                await anyio.sleep(repeat)
+            return
 
-        await wait_for_tasks_or_user_keypress({"func": check}, console=console)
+        if wait_for_keypress:
 
-        return all_checks
+            await wait_for_tasks_or_user_keypress(
+                {"func": watch}, console=self._console
+            )
 
-    async def perform_checks_once(self) -> "SortedList[CheckResult]":
+        else:
+            await wait_for_tasks({"func": watch})
 
-        results: SortedList[CheckResult] = await self._url_checks.perform_checks()
+        log.debug("Stopping upcheck pipeline...")
+        rest_results: Optional[Iterable[CheckResult]] = await self._source.stop()
 
-        for _target in self._targets.values():
-            log.debug(f"Writing results to target '{_target.get_id()}'...")
-            await _target.write(*results)
-            log.debug(f"Results written to target '{_target.get_id()}'")
+        if rest_results:
+            for r in rest_results:
+                await self.write_result(r)
 
-        return results
+        log.debug("upcheck pipeline stopped.")
+
+    async def write_result(self, check_result: CheckResult) -> None:
+
+        if not self._targets:
+            return
+
+        if isinstance(check_result, CheckError):
+            log.error(f"Check error: {check_result.error()}")
+            return
+
+        if not isinstance(check_result, CheckMetric):
+            raise Exception(
+                f"Invalid type '{type(check_result)}' for check result (should be 'CheckMetric'. This is a bug."
+            )
+
+        if len(self._targets) == 1:
+            target = list(self._targets.values())[0]
+            log.debug(f"Write metric to target: {target.get_id()}")
+            try:
+                await target.write(check_result)
+            except Exception as e:
+                log.error(f"Can't write metric to target '{target.get_id()}': {e}")
+
+            return
+
+        async def wrap(_result: CheckMetric, _target: CheckTarget):
+            log.debug(f"Write metric to target: {_target.get_id()}")
+            try:
+                await _target.write(_result)
+                log.debug(f"Finished writing to target: {_target.get_id()}")
+            except Exception as e:
+                log.error(f"Can't write metric to target '{_target.get_id()}': {e}")
+
+        async with create_task_group() as tg:
+
+            for _t in self._targets.values():
+                await tg.spawn(wrap, check_result, _t)

@@ -17,21 +17,35 @@ DEFAULT_MESSAGE = "Press '{}' to exit."
 
 async def wait_for_tasks(*tasks: Mapping[str, Any], cancel_task: Dict = None):
 
-    async with create_task_group() as tg:
-        for task in tasks:
-            func = task["func"]
-            args = task.get("args", [])
-            await tg.spawn(func, *args)
+    if cancel_task is None:
+        async with create_task_group() as tg:
 
-        if cancel_task:
+            for task in tasks:
+                func = task["func"]
+                args = task.get("args", [])
+                await tg.spawn(func, *args)
 
-            async def wrap():
+    else:
+
+        async with create_task_group() as tg:
+
+            async def run_tasks():
+                async with create_task_group() as _inner_tg:
+                    for task in tasks:
+                        func = task["func"]
+                        args = task.get("args", [])
+                        await _inner_tg.spawn(func, *args)
+
+                await tg.cancel_scope.cancel()
+
+            async def wrap_cancel_task():
                 func = cancel_task["func"]
                 args = cancel_task.get("args", [])
                 await func(*args)
                 await tg.cancel_scope.cancel()
 
-            await tg.spawn(wrap)
+            await tg.spawn(wrap_cancel_task)
+            await tg.spawn(run_tasks)
 
 
 async def wait_for_tasks_or_user_keypress(
@@ -79,7 +93,7 @@ async def wait_for_user_input(
             show_cursor()
 
     log.debug("Waiting for user input...")
-    await run_in_thread(wrap)
+    await run_in_thread(wrap, cancellable=True)
     log.debug("Waiting finished...")
 
 

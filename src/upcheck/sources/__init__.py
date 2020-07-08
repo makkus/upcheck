@@ -4,13 +4,11 @@ import logging
 import os
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Union
+from typing import AsyncIterator, Iterable, Optional, Union
 
 from ruamel.yaml import YAML
 from upcheck.exceptions import UpcheckException
-from upcheck.interfaces.cli.main import console
-from upcheck.targets import CheckTarget
-from upcheck.utils.callables import wait_for_tasks_or_user_keypress
+from upcheck.models import CheckResult
 
 
 log = logging.getLogger("upcheck")
@@ -20,7 +18,7 @@ AVAILABLE_SOURCE_TYPES = ["kafka"]
 
 class CheckSource(metaclass=ABCMeta):
     @classmethod
-    def create_from_file(cls, path: Union[str, Path]):
+    def create_from_file(cls, path: Union[str, Path], force_source_type: Optional[str]):
 
         if isinstance(path, str):
             path = Path(os.path.expanduser(path))
@@ -46,7 +44,15 @@ class CheckSource(metaclass=ABCMeta):
                 reason="File content must be dictionary.",
             )
 
-        source_type = content.pop("type", "kafka")
+        source_type: str = content.pop("type", "kafka")
+        if force_source_type:
+            if force_source_type != source_type:
+                raise UpcheckException(
+                    msg=f"Can't create source of type '{force_source_type}' from config '{path}'.",
+                    reason=f"Invalid source type '{source_type}' specified.",
+                )
+            source_type = source_type
+
         if source_type is None:
             raise UpcheckException(
                 msg=f"Can't create source from file '{path}'",
@@ -86,21 +92,12 @@ class CheckSource(metaclass=ABCMeta):
     def get_id(self) -> str:
         pass
 
-    async def start(self, *targets: CheckTarget) -> None:
-
-        await wait_for_tasks_or_user_keypress(
-            {"func": self._start, "args": targets}, console=console
-        )
-
-        await self._stop()
-
     @abstractmethod
-    async def _start(self, *targets: CheckTarget) -> None:
+    async def start(self) -> AsyncIterator[CheckResult]:
         pass
 
-    @abstractmethod
-    async def _stop(self) -> None:
-        pass
+    async def stop(self) -> Optional[Iterable[CheckResult]]:
+        return None
 
     def __repr__(self):
         return f"({self.__class__.__name__}: id={self.get_id()}"
