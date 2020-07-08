@@ -63,6 +63,8 @@ mypy:
 pages:
   before_script:
     - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[all-dev]"
+  variables:
+    UPCHECK_NO_WAIT: "true"
   script:
     - portray as_html -o public
   artifacts:

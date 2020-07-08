@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import os
 from typing import Dict, Iterable, Optional
 
 from anyio import create_task_group
@@ -91,7 +92,12 @@ class Upcheck(object):
             except Exception as e:
                 log.warning(f"Failed to disconnect target '{_target.get_id()}': {e}")
 
-    async def start(self, wait_for_keypress: bool = True):
+    async def start(self, wait_for_keypress: Optional[bool] = None):
+
+        if wait_for_keypress is None:
+            no_wait = os.getenv("UPCHECK_NO_WAIT", "false")
+            if no_wait.lower() == "true":
+                wait_for_keypress = False
 
         log.debug("Starting upcheck pipeline...")
 
