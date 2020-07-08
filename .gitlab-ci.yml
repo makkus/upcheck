@@ -62,7 +62,7 @@ mypy:
 
 pages:
   before_script:
-    - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[docs,all]"
+    - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[all-dev]"
   script:
     - portray as_html -o public
   artifacts:

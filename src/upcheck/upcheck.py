@@ -15,6 +15,15 @@ log = logging.getLogger("upcheck")
 
 
 class Upcheck(object):
+    """The central class of 'upcheck', connects a source to targets and kicks off the metric gathering.
+
+    Args:
+
+        source (CheckSource): the source object that emits 'CheckResult' objects
+        targets (Iterable[CheckTarget]): a list of target objects that consume the 'CheckResults'
+        console (Optional[Console]): optional rich.console.Console object, for terminal output. A new one will be created if not provided.
+    """
+
     def __init__(
         self,
         source: CheckSource,
