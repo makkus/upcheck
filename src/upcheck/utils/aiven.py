@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 import copy
+import os
 from typing import Any, Mapping, Optional
 
+import aiopg
+from aiopg import Connection
 from aiven.client import AivenClient
 from upcheck.exceptions import UpcheckException
+from upcheck.utils import create_temp_dir_with_text_files
+from upcheck.utils.kafka import UpcheckKafkaClient
 
 
 API_URL = "https://api.aiven.io"
 
 
 class UpcheckAivenClient(object):
-    def __init__(self, token_or_account_password: str, email: Optional[str]):
+    def __init__(self, token_or_account_password: str, email: Optional[str] = None):
         """Aiven client wrapper class.
 
         This class only exposes and consolidates the minimal necessary functions of the underlying Aiven client, which is needed for
@@ -213,3 +218,64 @@ class UpcheckAivenClient(object):
             details["password"] = _u["password"]
 
         return details
+
+    def create_kafka_client(
+        self,
+        topic: str,
+        group_id: Optional[str] = None,
+        project_name: Optional[str] = None,
+        service_name: Optional[str] = None,
+    ) -> UpcheckKafkaClient:
+
+        kafka_service_details: Mapping[str, Any] = self.get_kafka_service_details(
+            project_name=project_name, service_name=service_name
+        )
+
+        ca_cert = kafka_service_details["ca_cert"]
+        access_cert = kafka_service_details["access_cert"]
+        access_key = kafka_service_details["access_key"]
+
+        temp_dir = create_temp_dir_with_text_files(
+            {"ca.pem": ca_cert, "service.cert": access_cert, "service.key": access_key}
+        )
+
+        kafka_client_config = {
+            "host": kafka_service_details["host"],
+            "port": kafka_service_details["port"],
+            "topic": topic,
+            "group_id": group_id,
+            "cafile": os.path.join(temp_dir, "ca.pem"),
+            "certfile": os.path.join(temp_dir, "service.cert"),
+            "keyfile": os.path.join(temp_dir, "service.key"),
+        }
+
+        kafka_client = UpcheckKafkaClient(**kafka_client_config)
+        return kafka_client
+
+    async def create_postgres_connection(
+        self,
+        dbname: str,
+        user: Optional[str] = None,
+        project_name: Optional[str] = None,
+        service_name: Optional[str] = None,
+    ) -> Connection:
+
+        postgres_service_details: Mapping[str, Any] = self.get_postgres_service_details(
+            postgres_username=user, project_name=project_name, service_name=service_name
+        )
+
+        ca_cert = postgres_service_details["ca_cert"]
+        temp_dir = create_temp_dir_with_text_files({"ca.pem": ca_cert})
+
+        postgres_config = {
+            "user": postgres_service_details["user"],
+            "password": postgres_service_details["password"],
+            "host": postgres_service_details["host"],
+            "port": postgres_service_details["port"],
+            "dbname": dbname,
+            "sslmode": "verify-ca",
+            "sslrootcert": os.path.join(temp_dir, "ca.pem"),
+        }
+
+        connection: Connection = await aiopg.connect(**postgres_config)
+        return connection

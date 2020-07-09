@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from ssl import SSLContext
-from typing import Optional
+from typing import Callable, Optional
 
 import avro.schema
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
@@ -128,3 +128,12 @@ class UpcheckKafkaClient(object):
         if self._consumer is None:
             await self.connect_consumer()
         return self._consumer
+
+    async def listen(self, *callbacks: Callable):
+
+        consumer = await self.get_consumer()
+        # TODO: use task_group
+        async for msg in consumer:
+
+            for callback in callbacks:
+                await callback(msg)

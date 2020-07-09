@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import atexit
 import logging
 import os
 import sys
-from typing import Any, Dict, Mapping, Optional, Union
+from threading import Thread
+from typing import Any, Callable, Coroutine, Dict, Mapping, Optional, Union
 
 from anyio import create_task_group, run_in_thread
 from rich.console import Console
@@ -52,7 +54,7 @@ async def wait_for_tasks_or_user_keypress(
     *tasks: Mapping[str, Any],
     stop_key=DEFAULT_STOP_KEY,
     msg: Union[str, bool] = False,
-    console: Optional[Console] = None
+    console: Optional[Console] = None,
 ):
 
     cancel_task = {"func": wait_for_user_input, "args": [stop_key, msg, console]}
@@ -122,3 +124,40 @@ def wait_for_keypress() -> str:
             termios.tcsetattr(fd, termios.TCSAFLUSH, last)
 
     return pressed_key
+
+
+def wrap_async_task(
+    coroutine: Coroutine, *args: Any, _raise_exception: bool = True, **kwargs: Any
+) -> Any:
+    async def wrap():
+        return await coroutine(*args, **kwargs)
+
+    # task = asyncio.create_task(wrap())
+    result = _run_in_thread(wrap, _raise_exception=_raise_exception)
+    return result
+
+
+def _run_in_thread(func: Callable, *args, _raise_exception=True):
+
+    result: Dict[str, Any] = {}
+
+    def wrap(result_holder):
+
+        try:
+            loop = asyncio.new_event_loop()
+            result_holder["result"] = loop.run_until_complete(func(*args))
+        except (Exception) as e:
+            log.debug(f"Error in thread: {e}", exc_info=True)
+            result_holder["result"] = e
+
+    t = Thread(target=wrap, args=(result,))
+    t.start()
+    t.join()
+
+    if _raise_exception:
+        if isinstance(result["result"], Exception) or issubclass(
+            result["result"].__class__, Exception
+        ):
+            raise result["result"]
+
+    return result["result"]
