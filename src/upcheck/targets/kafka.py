@@ -83,7 +83,7 @@ class AivenKafkaTarget(KafkaTarget):
         email: Optional[str] = None,
         project_name: Optional[str] = None,
         group_id: Optional[str] = None,
-        kafka_service_name: Optional[str] = None,
+        service_name: Optional[str] = None,
     ):
 
         # TODO: lazy initialization, on demand
@@ -93,7 +93,7 @@ class AivenKafkaTarget(KafkaTarget):
         self._kafka_service_details: Mapping[
             str, Any
         ] = self._aiven_client.get_kafka_service_details(
-            project_name=project_name, service_name=kafka_service_name
+            project_name=project_name, service_name=service_name
         )
 
         ca_cert = self._kafka_service_details["ca_cert"]

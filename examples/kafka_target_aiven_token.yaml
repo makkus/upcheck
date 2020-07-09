@@ -1,0 +1,6 @@
+type: kafka-aiven
+topic: check_metrics
+group_id: upcheck
+password: 'VERY_LONG_GENERATED_TOKEN_COPIED_FROM_AIVEN_WEBSITE'
+project_name: upcheck_project
+service_name: kafka

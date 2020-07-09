@@ -33,6 +33,10 @@ The binary can update itself. To do that, issue:
 
     upcheck self update
 
+## Known issues
+
+- it looks like on some systems/terminals the curser is disabled after an *upcheck* run, even after the programm is finished. If this happens, issue a ``reset`` command to get your normal terminal style back. Not sure what causes that yet. Happens to me when I 'ssh' into a machine and use *upcheck* then.
+
 # Development
 
 ## Requirements
@@ -70,6 +74,7 @@ make init
 
 For details (and other, minor targets), check the ``Makefile``.
 
+
 ## Update project template
 
 This project uses [cruft](https://github.com/timothycrosley/cruft) to apply updates to [the base Python project template](https://gitlab.com/frkl/template-python-project) to this repository. Check out it's documentation for more information.
@@ -78,7 +83,6 @@ This project uses [cruft](https://github.com/timothycrosley/cruft) to apply upda
     # interactively approve changes, make changes if necessary
     git add *
     git commit -m "chore: updated project from template"
-
 
 
 ## Copyright & license

@@ -29,8 +29,6 @@ Its main configuration parameters (``CHECK_ITEM``) are the check details: the we
 :    If no file with a path equalling the specified string exists, the string will be interpretes as a url. In this case a simple website check using that url will be run, without any regex checking.
 
 
-
-
 #### Target details
 
 #### Other parameters
@@ -54,15 +52,15 @@ In addition to the check and target details, you can specify some check paramete
 
 #### Check websites using a config file
 
-{{ cli("upcheck", "check", "examples/multi.yaml", max_height=200) }}
+{{ cli("upcheck", "check", "examples/multi_checks.yaml", max_height=200) }}
 
 Where the content for``examples/multi.yaml`` is:
 
-{{ inline_file_as_codeblock("examples/multi.yaml", "yaml") }}
+{{ inline_file_as_codeblock("examples/multi_checks.yaml", "yaml") }}
 
 #### Mix and match file and url config
 
-{{ cli("upcheck", "check", "examples/multi.yaml", "https://frkl.io", max_height=200) }}
+{{ cli("upcheck", "check", "examples/multi_checks.yaml", "https://frkl.io", max_height=200) }}
 
 #### Check a single site, send results to Kafka
 
@@ -74,7 +72,7 @@ Where the content for``examples/multi.yaml`` is:
 
 With a ``kafka.yaml`` config file like:
 
-{{ inline_file_as_codeblock("examples/kafka.yaml", "yaml") }}
+{{ inline_file_as_codeblock("examples/kafka_target.yaml", "yaml") }}
 
 ## sub-command: ``listen``
 

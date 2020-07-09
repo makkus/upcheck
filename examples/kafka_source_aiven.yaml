@@ -1,0 +1,6 @@
+type: kafka-aiven
+topic: check_metrics
+email: my@email.com
+password: 'XYZ123'
+project_name: upcheck_project
+service_name: kafka

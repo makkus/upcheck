@@ -120,7 +120,7 @@ class AivenPostgresTarget(PostgresTarget):
         password: str,
         email: Optional[str] = None,
         project_name: Optional[str] = None,
-        postgres_service_name: Optional[str] = None,
+        service_name: Optional[str] = None,
     ):
 
         # TODO: lazy initialization, on demand
@@ -130,7 +130,7 @@ class AivenPostgresTarget(PostgresTarget):
         self._postgres_service_details: Mapping[
             str, Any
         ] = self._client.get_postgres_service_details(
-            project_name=project_name, service_name=postgres_service_name
+            project_name=project_name, service_name=service_name
         )
 
         ca_cert = self._postgres_service_details["ca_cert"]

@@ -1,0 +1,8 @@
+type: "postgres"
+username: "avnadmin"
+password: "abc123"
+host: "db.frkl.io"
+port: 5432
+dbname: "upcheck"
+sslmode: "verify-ca"
+sslrootcert: "/home/markus/projects/upcheck/db/ca.pem"
