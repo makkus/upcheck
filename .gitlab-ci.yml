@@ -59,6 +59,14 @@ mypy:
     - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[testing,all]"
   script:
     - mypy src
+    -
+coverage:
+  image: python:3.8
+  stage: test
+  before_script:
+    - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[testing,all]"
+  script:
+    - coverage run -m pytest
 
 pages:
   before_script:
