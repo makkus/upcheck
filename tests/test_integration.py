@@ -9,15 +9,13 @@ from upcheck.targets import CheckTarget, CollectorCheckTarget
 from upcheck.upcheck import Upcheck
 
 
-RESOURCES_FOLDER = "/home/markus/projects/aiven/upcheck_configs"
-
-
 @pytest.mark.anyio
 async def test_integration_no_target():
 
-    multi_check_config = os.path.join(RESOURCES_FOLDER, "multi.yaml")
-
-    url_checks = UrlCheck.create_checks(multi_check_config)
+    url_checks = UrlCheck.create_checks(
+        {"url": "https://cloudflare.com", "regex": "cloudflare"}, "https://google.com"
+    )
+    print(url_checks)
     source = ActualCheckCheckSource(*url_checks)
     target = CollectorCheckTarget()
 
