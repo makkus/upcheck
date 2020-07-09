@@ -7,7 +7,7 @@
 
 # upcheck
 
-*Collect website accessability metrics*
+*Collect website availability metrics*
 
 ## Description
 
@@ -37,15 +37,18 @@ The binary can update itself. To do that, issue:
 
 ## Requirements
 
+- Python (version >=3.6)
+- pip, virtualenv
 - git
+- make
 - [direnv](https://direnv.net/) (optional)
 
 ## Prepare development environment
 
 Notes:
 
-- to adjust the Python version to create the development virtualenv from, edit ``.envrc``
-- if not using [direnv](https://direnv.net), you have to setup and activate your Python virtualenv yourself, manually, before running ``make init``
+- if using *direnv*, adjust the Python version in ``.envrc`` (should not be necessary)
+- if not using *direnv*, you have to setup and activate your Python virtualenv yourself, manually, before running ``make init``
 
 ```
 git clone https://gitlab.com/makkus/upcheck

@@ -28,6 +28,7 @@ log = logging.getLogger("upcheck")
 )
 @click.option(
     "--target",
+    "-t",
     help="path to a target config file (multiple targets allowed)",
     multiple=True,
     type=click.Path(
@@ -36,6 +37,7 @@ log = logging.getLogger("upcheck")
 )
 @click.option(
     "--repeat",
+    "-r",
     type=int,
     required=False,
     help="run checks repeatedly, with the value of this option as time between checks (in seconds)",
@@ -71,6 +73,7 @@ async def check(
     try:
         upcheck = Upcheck(source=_source, targets=_targets)
 
+        console.line()
         # connect before starting the checks, so misconfiguration
         # of targets is picked up before tests are run
         console.print("- initializing source and connecting to targets...")

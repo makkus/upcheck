@@ -26,6 +26,7 @@ log = logging.getLogger("upcheck")
 )
 @click.option(
     "--target",
+    "-t",
     help="path to a target config file (multiple targets allowed)",
     multiple=True,
     type=click.Path(

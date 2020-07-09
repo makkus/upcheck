@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import atexit
 import logging
 import sys
 import textwrap
@@ -13,6 +14,13 @@ from upcheck.interfaces.cli._utlis import logzero_option
 
 log = logging.getLogger("upcheck")
 console = Console()
+
+
+def show_cursor():
+    console.show_cursor(True)
+
+
+atexit.register(show_cursor)
 
 
 def pretty_print_exception(exc: Exception):
