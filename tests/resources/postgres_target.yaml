@@ -1,0 +1,6 @@
+type: "postgres"
+username: "avnadmin"
+password: "xxx"
+host: "upcheck-ilmark-0caf.aivencloud.com"
+port: 25324
+dbname: "defaultdb"

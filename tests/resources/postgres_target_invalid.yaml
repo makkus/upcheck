@@ -1,0 +1,5 @@
+username: "avnadmin"
+password: "xxxx"
+host: "upcheck-ilmark-0caf.aivencloud.com"
+port: "25324"
+dbname: "defaultdb"

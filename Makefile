@@ -124,11 +124,11 @@ test: ## run tests quickly with the default Python
 test-all: ## run tests on every Python version with tox
 	tox
 
-#coverage: ## check code coverage quickly with the default Python
-#	coverage run --source src/upcheck -m pytest
-#	coverage report -m
-#	coverage html
-#	$(BROWSER) htmlcov/index.html
+coverage: ## check code coverage quickly with the default Python
+	coverage run --source=upcheck -m pytest tests
+	coverage report -m
+	coverage html
+	$(BROWSER) htmlcov/index.html
 
 dist: clean ## builds source and wheel package
 	python setup.py sdist

@@ -1,0 +1,5 @@
+- type: kafka
+  host: kafka-ilmark-0caf.aivencloud.com
+  port: 25326
+  topic: "check_metrics"
+  group_id: upcheck

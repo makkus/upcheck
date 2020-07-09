@@ -1,13 +1,11 @@
 # .coveragerc to control coverage.py
 [run]
-source = src
-omit = *tests*
 branch = True
 
 
 #[paths]
 #source =
-#    src/upcheck
+#    src/
 #    */site-packages/
 
 [report]
