@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-from typing import Optional
+import os
+from typing import Any, Mapping, Optional
 
 import aiopg
 from aiopg import Connection, Pool
 from upcheck.exceptions import UpcheckException
 from upcheck.models import CheckMetric
 from upcheck.targets import CheckTarget
+from upcheck.utils import create_temp_dir_with_text_files
+from upcheck.utils.aiven import UpcheckAivenClient
 
 
 class PostgresTarget(CheckTarget):
@@ -114,3 +117,39 @@ class PostgresTarget(CheckTarget):
             )
 
             await self._insert(query, args)
+
+
+class AivenPostgresTarget(PostgresTarget):
+    def __init__(
+        self,
+        dbname: str,
+        password: str,
+        email: Optional[str] = None,
+        project_name: Optional[str] = None,
+        postgres_service_name: Optional[str] = None,
+    ):
+
+        # TODO: lazy initialization, on demand
+        self._client = UpcheckAivenClient(
+            token_or_account_password=password, email=email
+        )
+        self._postgres_service_details: Mapping[
+            str, Any
+        ] = self._client.get_postgres_service_details(
+            project_name=project_name, service_name=postgres_service_name
+        )
+
+        ca_cert = self._postgres_service_details["ca_cert"]
+        temp_dir = create_temp_dir_with_text_files({"ca.pem": ca_cert})
+
+        postgres_target_config = {
+            "username": self._postgres_service_details["user"],
+            "password": self._postgres_service_details["password"],
+            "host": self._postgres_service_details["host"],
+            "port": self._postgres_service_details["port"],
+            "dbname": dbname,
+            "sslmode": "verify-ca",
+            "sslrootcert": os.path.join(temp_dir, "ca.pem"),
+        }
+
+        super().__init__(**postgres_target_config)

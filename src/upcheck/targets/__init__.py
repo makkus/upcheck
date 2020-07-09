@@ -5,7 +5,7 @@ import os
 import uuid
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, List, MutableMapping, Optional, Union
 
 from ruamel.yaml import YAML
 from upcheck.exceptions import UpcheckException
@@ -14,7 +14,7 @@ from upcheck.models import CheckMetric
 
 log = logging.getLogger("upcheck")
 
-AVAILABLE_TARGET_TYPES = ["kafka", "postgres"]
+AVAILABLE_TARGET_TYPES = ["kafka", "postgres", "kafka-aiven", "postgres-aiven"]
 
 
 class CheckTarget(metaclass=ABCMeta):
@@ -45,10 +45,15 @@ class CheckTarget(metaclass=ABCMeta):
                 reason="File content must be dictionary.",
             )
 
-        target_type = content.pop("type", None)
+        return cls.create_from_dict(target_config=content)
+
+    @classmethod
+    def create_from_dict(cls, target_config: MutableMapping[str, Any]):
+
+        target_type = target_config.pop("type", None)
         if target_type is None:
             raise UpcheckException(
-                msg=f"Can't create target from file '{path}'",
+                msg="Can't create target.",
                 reason="No 'type' key specified.",
                 solution=f"Add a key 'type' with a value from: {', '.join(AVAILABLE_TARGET_TYPES)}",
             )
@@ -58,16 +63,29 @@ class CheckTarget(metaclass=ABCMeta):
 
                 from upcheck.targets.postgres import PostgresTarget
 
-                target: CheckTarget = PostgresTarget(**content)
+                target: CheckTarget = PostgresTarget(**target_config)
+
+            elif target_type == "postgres-aiven":
+
+                from upcheck.targets.postgres import AivenPostgresTarget
+
+                target = AivenPostgresTarget(**target_config)
 
             elif target_type == "kafka":
 
                 from upcheck.targets.kafka import KafkaTarget
 
-                target = KafkaTarget(**content)
+                target = KafkaTarget(**target_config)
+
+            elif target_type == "kafka-aiven":
+
+                from upcheck.targets.kafka import AivenKafkaTarget
+
+                target = AivenKafkaTarget(**target_config)
+
             else:
                 raise UpcheckException(
-                    msg=f"Can't create target from file '{path}'",
+                    msg="Can't create target.",
                     reason=f"Invalid target type '{target_type}'",
                     solution=f"Use a valid 'target_type' value (one of: {', '.join(AVAILABLE_TARGET_TYPES)}).",
                 )
@@ -76,7 +94,7 @@ class CheckTarget(metaclass=ABCMeta):
 
         except Exception as e:
             raise UpcheckException(
-                msg=f"Can't load target config '{path.as_posix()}'.",
+                msg="Can't load target config.",
                 reason=f"Invalid config for target type '{target_type}: {e}",
             )
         return target

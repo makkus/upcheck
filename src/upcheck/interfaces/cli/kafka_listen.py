@@ -48,7 +48,7 @@ async def kafka_listen(ctx, source: str, target: Tuple[str], terminal: bool):
     For details about the Kafka source configuration, please visit https://makkus.gitlab.io/upcheck/docs/usage/#source-details. For information on how to specify the targets, visit https://makkus.gitlab.io/upcheck/docs/usage/#target-details
     """
 
-    _source = CheckSource.create_from_file(source, force_source_type="kafka")
+    _source = CheckSource.create_from_file(source)
 
     _targets: List[CheckTarget] = []
     if not target:

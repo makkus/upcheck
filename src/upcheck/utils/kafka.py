@@ -6,7 +6,7 @@ from typing import Optional
 import avro.schema
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from aiokafka.helpers import create_ssl_context
-from upcheck.defaults import UPCHECK_RESOURCES_FOLDER
+from upcheck.defaults import DEFAULT_KAFKA_GROUP_ID, UPCHECK_RESOURCES_FOLDER
 from upcheck.exceptions import UpcheckException
 
 
@@ -22,6 +22,7 @@ class UpcheckKafkaClient(object):
         host: str,
         port: int,
         topic: str,
+        group_id: Optional[str] = None,
         cafile: Optional[str] = None,
         certfile: Optional[str] = None,
         keyfile: Optional[str] = None,
@@ -30,6 +31,9 @@ class UpcheckKafkaClient(object):
         self._host = host
         self._port = port
         self._topic: str = topic
+        if group_id is None:
+            group_id = DEFAULT_KAFKA_GROUP_ID
+        self._group_id: str = group_id
 
         self._security_protocol: str = "SSL"
 
@@ -108,7 +112,7 @@ class UpcheckKafkaClient(object):
         self._consumer = AIOKafkaConsumer(
             self._topic,
             bootstrap_servers=f"{self._host}:{self._port}",
-            group_id="upcheck",
+            group_id=self._group_id,
             security_protocol=self._security_protocol,
             ssl_context=self._get_ssl_context(),
         )
@@ -119,7 +123,7 @@ class UpcheckKafkaClient(object):
         if self._consumer is not None:
             await self._consumer.stop()
 
-    async def get_consumer(self):
+    async def get_consumer(self) -> AIOKafkaConsumer:
 
         if self._consumer is None:
             await self.connect_consumer()

@@ -4,7 +4,7 @@ import logging
 import os
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import AsyncIterator, Iterable, Optional, Union
+from typing import Any, AsyncIterator, Iterable, MutableMapping, Optional, Union
 
 from ruamel.yaml import YAML
 from upcheck.exceptions import UpcheckException
@@ -13,12 +13,14 @@ from upcheck.models import CheckResult
 
 log = logging.getLogger("upcheck")
 
-AVAILABLE_SOURCE_TYPES = ["kafka"]
+AVAILABLE_SOURCE_TYPES = ["kafka", "kafka-aiven"]
 
 
 class CheckSource(metaclass=ABCMeta):
     @classmethod
-    def create_from_file(cls, path: Union[str, Path], force_source_type: Optional[str]):
+    def create_from_file(
+        cls, path: Union[str, Path], force_source_type: Optional[str] = None
+    ):
 
         if isinstance(path, str):
             path = Path(os.path.expanduser(path))
@@ -44,18 +46,29 @@ class CheckSource(metaclass=ABCMeta):
                 reason="File content must be dictionary.",
             )
 
-        source_type: str = content.pop("type", "kafka")
+        return cls.create_from_dict(
+            source_config=content, force_source_type=force_source_type
+        )
+
+    @classmethod
+    def create_from_dict(
+        cls,
+        source_config: MutableMapping[str, Any],
+        force_source_type: Optional[str] = None,
+    ):
+
+        source_type: str = source_config.pop("type", "kafka")
         if force_source_type:
             if force_source_type != source_type:
                 raise UpcheckException(
-                    msg=f"Can't create source of type '{force_source_type}' from config '{path}'.",
-                    reason=f"Invalid source type '{source_type}' specified.",
+                    msg=f"Can't create source of type '{force_source_type}' from config.",
+                    reason=f"Invalid source type specified: '{source_type}'",
                 )
             source_type = source_type
 
         if source_type is None:
             raise UpcheckException(
-                msg=f"Can't create source from file '{path}'",
+                msg="Can't create source from config.",
                 reason="No 'type' key specified.",
                 solution=f"Add a key 'type' with a value from: {', '.join(AVAILABLE_SOURCE_TYPES)}",
             )
@@ -65,19 +78,27 @@ class CheckSource(metaclass=ABCMeta):
 
                 from upcheck.sources.kafka import KafkaSource
 
-                target = KafkaSource(**content)
+                target = KafkaSource(**source_config)
+            elif source_type == "kafka-aiven":
+
+                from upcheck.sources.kafka import AivenKafkaSoure
+
+                target = AivenKafkaSoure(**source_config)
+
             else:
                 raise UpcheckException(
-                    msg=f"Can't create source from file '{path}'",
+                    msg="Can't create source from config.",
                     reason=f"Invalid source type '{source_type}'",
                     solution=f"Use a valid 'source_type' value (one of: {', '.join(AVAILABLE_SOURCE_TYPES)}).",
                 )
 
             log.debug(f"Created source of type '{source_type}': {target.get_id()}")
 
+        except UpcheckException as ue:
+            raise ue
         except Exception as e:
             raise UpcheckException(
-                msg=f"Can't load source config '{path.as_posix()}'.",
+                msg=f"Error creating source of type '{source_type}'.",
                 reason=f"Invalid config for source type '{source_type}: {e}",
             )
         return target

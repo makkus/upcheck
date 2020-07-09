@@ -98,6 +98,8 @@ class Upcheck(object):
             no_wait = os.getenv("UPCHECK_NO_WAIT", "false")
             if no_wait.lower() == "true":
                 wait_for_keypress = False
+            else:
+                wait_for_keypress = True
 
         log.debug("Starting upcheck pipeline...")
 

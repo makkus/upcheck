@@ -84,7 +84,7 @@ async def check(
         if repeat is not None and repeat > 0:
             console.print("   -> press 'q' to stop the checks")
 
-        await upcheck.start()
+        await upcheck.start(wait_for_keypress=True)
         console.print(" -> all checks finished")
 
     finally:

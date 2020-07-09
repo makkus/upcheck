@@ -17,3 +17,5 @@ else:
     """Marker to indicate the base folder for the `upcheck` module."""
 
 UPCHECK_RESOURCES_FOLDER = os.path.join(UPCHECK_MODULE_BASE_FOLDER, "resources")
+
+DEFAULT_KAFKA_GROUP_ID = "upcheck"
