@@ -92,14 +92,12 @@ class Upcheck(object):
             except Exception as e:
                 log.warning(f"Failed to disconnect target '{_target.get_id()}': {e}")
 
-    async def start(self, wait_for_keypress: Optional[bool] = None):
+    async def start(self, wait_for_keypress: Optional[bool] = True):
 
-        if wait_for_keypress is None:
-            no_wait = os.getenv("UPCHECK_NO_WAIT", "false")
-            if no_wait.lower() == "true":
-                wait_for_keypress = False
-            else:
-                wait_for_keypress = True
+        # TODO; use callback instead of 'wait_for_keypress'
+        no_wait = os.getenv("UPCHECK_NO_WAIT", None)
+        if no_wait is not None:
+            wait_for_keypress = False if no_wait.lower() == "true" else False
 
         log.debug("Starting upcheck pipeline...")
 
