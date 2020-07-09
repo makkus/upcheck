@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from threading import Thread
-from typing import Any, Callable, Coroutine, Dict, Mapping, Optional, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Union
 
 from anyio import create_task_group, run_in_thread
 from rich.console import Console
@@ -127,7 +127,7 @@ def wait_for_keypress() -> str:
 
 
 def wrap_async_task(
-    coroutine: Coroutine, *args: Any, _raise_exception: bool = True, **kwargs: Any
+    coroutine: Callable, *args: Any, _raise_exception: bool = True, **kwargs: Any
 ) -> Any:
     async def wrap():
         return await coroutine(*args, **kwargs)

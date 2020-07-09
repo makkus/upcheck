@@ -3,7 +3,7 @@ import os
 from typing import Any, Mapping, Optional
 
 import aiopg
-from aiopg import Connection, Pool
+from aiopg import Connection
 from upcheck.exceptions import UpcheckException
 from upcheck.models import CheckMetric
 from upcheck.targets import CheckTarget
@@ -34,7 +34,7 @@ class PostgresTarget(CheckTarget):
         self._sslmode: Optional[str] = sslmode
         self._sslrootcert: Optional[str] = sslrootcert
 
-        self._pool: Optional[Pool] = None
+        self._connection: Optional[Connection] = None
 
     def get_id(self) -> str:
 
@@ -61,12 +61,6 @@ class PostgresTarget(CheckTarget):
         return self._port
 
     async def connect(self) -> Connection:
-
-        if self._pool is not None:
-            raise UpcheckException(
-                msg="Can't connect to database.",
-                reason="Connection already established.",
-            )
 
         try:
             self._connection = await aiopg.connect(
