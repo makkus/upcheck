@@ -9,6 +9,9 @@ from upcheck.targets import CheckTarget, CollectorCheckTarget
 from upcheck.upcheck import Upcheck
 
 
+os.environ["UPCHECK_NO_WAIT"] = "true"
+
+
 @pytest.mark.anyio
 async def test_integration_no_target():
 
@@ -38,6 +41,7 @@ async def test_integration_kafka_target(httpserver):
         "password": os.environ["AIVEN_TOKEN"],
     }
     kafka_target = CheckTarget.create_from_dict(kafka_config)
+    collector_target = CollectorCheckTarget()
 
     httpserver.expect_request("/abc").respond_with_data("abcdefghijklmnopqrstuvwxyz")
 
@@ -45,9 +49,11 @@ async def test_integration_kafka_target(httpserver):
 
     source = ActualCheckCheckSource.create_check_source(check_url)
 
-    upcheck = Upcheck(source=source, targets=[kafka_target])
+    upcheck = Upcheck(source=source, targets=[kafka_target, collector_target])
 
     await upcheck.start(wait_for_keypress=False)
+
+    assert len(collector_target.results) == 1
 
     await source.disconnect()
     await kafka_target.disconnect()
