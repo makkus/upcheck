@@ -17,7 +17,9 @@ from upcheck.utils.aiven import UpcheckAivenClient
 @pytest.fixture
 def kafka_client():
 
-    password = os.environ["AIVEN_TOKEN"]
+    password = os.environ.get("AIVEN_TOKEN", None)
+    if password is None:
+        return None
 
     project_name = None
     kafka_service_name = None
@@ -43,7 +45,9 @@ def kafka_client():
 @pytest.fixture
 async def postgres_connection():
 
-    password = os.environ["AIVEN_TOKEN"]
+    password = os.environ.get("AIVEN_TOKEN", None)
+    if password is None:
+        return None
 
     project_name = None
     postgres_service_name = None
