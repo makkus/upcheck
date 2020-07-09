@@ -3,7 +3,6 @@ import asyncclick as click
 
 import upcheck.interfaces.cli.check
 import upcheck.interfaces.cli.kafka_listen
-import upcheck.interfaces.cli.aiven
 
 try:
     import frtls
