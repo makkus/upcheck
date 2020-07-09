@@ -15,9 +15,18 @@ from upcheck.utils.callables import wrap_async_task
 
 os.environ["UPCHECK_NO_WAIT"] = "true"
 
+run_integration_tests = (
+    True
+    if os.environ.get("RUN_INTEGRATION_TESTS", "false").lower() == "true"
+    else False
+)
+
 
 @pytest.mark.anyio
 async def test_integration_no_target():
+
+    if not run_integration_tests:
+        return
 
     url_checks = UrlCheck.create_checks(
         {"url": "https://cloudflare.com", "regex": "cloudflare"}, "https://google.com"
@@ -35,6 +44,9 @@ async def test_integration_no_target():
 
 @pytest.mark.anyio
 async def test_integration_kafka_target(httpserver, kafka_client):
+
+    if not run_integration_tests:
+        return
 
     if os.environ.get("AIVEN_TOKEN", None) is None:
         return
@@ -91,6 +103,9 @@ async def test_integration_kafka_target(httpserver, kafka_client):
 @pytest.mark.anyio
 async def test_integration_postgres_target(httpserver, postgres_connection):
 
+    if not run_integration_tests:
+        return
+
     if os.environ.get("AIVEN_TOKEN", None) is None:
         return
 
@@ -137,6 +152,9 @@ async def test_integration_postgres_target(httpserver, postgres_connection):
 
 @pytest.mark.anyio
 async def test_integration_end_to_end(httpserver, postgres_connection):
+
+    if not run_integration_tests:
+        return
 
     if os.environ.get("AIVEN_TOKEN", None) is None:
         return

@@ -63,6 +63,8 @@ mypy:
 coverage:
   image: python:3.8
   stage: test
+  variables:
+    RUN_INTEGRATION_TESTS: "true"
   before_script:
     - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[testing,all]"
   script:
