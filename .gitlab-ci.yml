@@ -68,7 +68,7 @@ coverage:
   before_script:
     - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[testing,all]"
   script:
-    - coverage run -m pytest
+    - coverage run --concurrency=multiprocessing -m pytest
     - coverage combine
     - coverage report -m
 
