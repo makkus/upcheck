@@ -57,10 +57,12 @@ Now we need to actually produce our check events. For that, we open up a differe
 
 ``` console
 # in a different terminal, start the check process
-> upcheck check --target ~/kafka.yaml --repeat 60 --terminal
+> upcheck check --target ~/kafka.yaml --repeat 60 --terminal https://frkl.io
 ```
 
-You should be able
+We should be able to see test results coming into our Postgres database table now.
+
+For more information about how to run checks, and configure endpoints, please refer to the [documentation](https://makkus.gitlab.io/upcheck/docs/usage).
 
 ## Links
 

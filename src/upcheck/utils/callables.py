@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import atexit
 import logging
 import os
 import sys
@@ -77,22 +76,22 @@ async def wait_for_user_input(
             print(msg)
         c = None
 
-        if console is not None:
-            console.show_cursor(show=False)
+        # if console is not None:
+        #     console.show_cursor(show=False)
 
-        def show_cursor():
-            if console is not None:
-                console.show_cursor(show=True)
-
-        atexit.register(show_cursor)
+        # def show_cursor():
+        #     if console is not None:
+        #         console.show_cursor(show=True)
+        #
+        # atexit.register(show_cursor)
 
         try:
             while c != stop_key:
                 c = wait_for_keypress()
         except KeyboardInterrupt:
             print("Execution interrupted by user, exiting...")
-        finally:
-            show_cursor()
+        # finally:
+        #     show_cursor()
 
     log.debug("Waiting for user input...")
     await run_in_thread(wrap, cancellable=True)

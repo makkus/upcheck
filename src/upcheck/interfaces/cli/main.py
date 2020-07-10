@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import atexit
 import logging
 import sys
 import textwrap
@@ -16,14 +15,12 @@ log = logging.getLogger("upcheck")
 console = Console()
 
 
-def show_cursor():
-    try:
-        console.show_cursor(True)
-    except Exception:
-        pass
-
-
-atexit.register(show_cursor)
+# def show_cursor():
+#     try:
+#         console.show_cursor(True)
+#     except Exception:
+#         pass
+# atexit.register(show_cursor)
 
 
 def pretty_print_exception(exc: Exception):
