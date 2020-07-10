@@ -52,6 +52,10 @@ First, we need to start our listener instance:
 
 ``` console
 > upcheck kafka-listen --source ~/kafka.yaml --target ~/postgres.yaml --terminal
+- initializing kafka client and connecting to targets...
+ -> done
+- starting checks, sending results to targets
+   -> press 'q' to stop the checks
 ```
 
 *Note*: the ``--terminal`` flag tells *upcheck* to print any received messages to the terminal, which is nice for debugging
@@ -60,6 +64,19 @@ Now we need to actually produce our check events. For that, we open up a differe
 
 ``` console
 > upcheck check --target ~/kafka.yaml --repeat 60 --terminal https://frkl.io
+- initializing source and connecting to targets...
+ -> done
+- starting checks, sending results to targets
+   -> press 'q' to stop the checks
+
+  url             https://frkl.io  
+  started         2020-07-10 13:13:59.792021+02:00  
+  response time   914 ms  
+  response code   200  
+  regex matched   n/a  
+...
+...
+...
 ```
 
 We should be able to see test results coming into our Postgres database table now.
