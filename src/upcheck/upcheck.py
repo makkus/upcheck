@@ -151,6 +151,7 @@ class Upcheck(object):
             return
 
         async def wrap(_result: CheckMetric, _target: CheckTarget):
+
             log.debug(f"Write metric to target: {_target.get_id()}")
             try:
                 await _target.write(_result)

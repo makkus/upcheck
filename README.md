@@ -14,6 +14,22 @@
 `upcheck` checks whether websites are up, how long they take to response, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
 
 
+### Example
+
+Use one *upcheck* instance to perform the checks and send the results to a Kafka topic, and another one to listen to that Kafka topic, and forward any check result messages to a Postgres database:
+
+``` console
+# start the listener
+> upcheck kafka-listen --source ~/kafka.yaml --target ~/postgres.yaml --terminal
+# in a different terminal, start the check process
+> upcheck check --target ~/kafka.yaml --terminal --repeat 60
+```  
+
+
+**Notes**:
+- the ``--terminal`` flags are used to print incoming check result to the terminal, for debugging purposes
+
+
 ## Links
 
 - [Documentation](https://makkus.gitlab.io/upcheck/)
@@ -36,6 +52,7 @@ The binary can update itself. To do that, issue:
 ## Known issues
 
 - it looks like on some systems/terminals the curser is disabled after an *upcheck* run, even after the programm is finished. If this happens, issue a ``reset`` command to get your normal terminal style back. Not sure what causes that yet. Happens to me when I 'ssh' into a machine and use *upcheck* then.
+- end-to-end integration test takes a long time to establish connections to source/targets, needs investigation
 
 # Development
 
@@ -75,6 +92,19 @@ make init
 For details (and other, minor targets), check the ``Makefile``.
 
 
+## Running tests
+
+```console
+> make test
+# or
+> make coverage
+```
+
+*Notes*:
+
+- integration tests will only run if the ``RUN_INTEGRATION_TESTS`` environment variable is set to ``true``
+- some integration tests need the ``AIVEN_TOKEN`` environment variable set to a valid auth token, otherwise they will be skipped
+
 ## Update project template
 
 This project uses [cruft](https://github.com/timothycrosley/cruft) to apply updates to [the base Python project template](https://gitlab.com/frkl/template-python-project) to this repository. Check out it's documentation for more information.
@@ -87,7 +117,7 @@ This project uses [cruft](https://github.com/timothycrosley/cruft) to apply upda
 
 ## Copyright & license
 
-Please check the [LICENSE](/LICENSE) file in this repository (it's a short license!), also check out the [*freckles* license page](https://freckles.io/license) for more details.
+Please check the [LICENSE](/LICENSE) file in this repository (it's a short license!).
 
 [Parity Public License 6.0.0](https://licensezero.com/licenses/parity)
 
