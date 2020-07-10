@@ -73,9 +73,9 @@ async def kafka_listen(ctx, source: str, target: Tuple[str], terminal: bool):
         await upcheck.connect()
         console.print(" -> done")
 
-        msg = "- starting checks"
+        msg = "- listening for messages"
         if target:
-            msg += ", sending results to targets"
+            msg += ", forwarding them to targets as they arrive"
         console.print(msg)
         console.print("   -> press 'q' to stop the checks")
 

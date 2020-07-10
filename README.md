@@ -49,10 +49,10 @@ service_name: kafka
 First, we need to start our listener instance:
 
 ``` console
-> upcheck kafka-listen --source ~/kafka.yaml --target ~/postgres.yaml --terminal
+> upcheck kafka-listen --source kafka.yaml --target postgres.yaml --terminal
 - initializing kafka client and connecting to targets...
  -> done
-- starting checks, sending results to targets
+- listening for messages, forwarding them to targets as they arrive results to targets
    -> press 'q' to stop the checks
 ```
 
@@ -61,7 +61,7 @@ First, we need to start our listener instance:
 Now we need to actually produce our check events. For that, we open up a different terminal and issue something like:
 
 ``` console
-> upcheck check --target ~/kafka.yaml --repeat 60 --terminal https://frkl.io
+> upcheck check --target kafka.yaml --repeat 60 --terminal https://frkl.io
 - initializing source and connecting to targets...
  -> done
 - starting checks, sending results to targets
