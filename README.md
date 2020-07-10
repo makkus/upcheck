@@ -31,8 +31,7 @@ In order to specify necessary details for those services, we need two (yaml) fil
 type: kafka-aiven
 topic: check_metrics
 group_id: upcheck
-email: my@email.com
-password: 'XYZ123'
+password: 'VERY_LONG_GENERATED_TOKEN_COPIED_FROM_AIVEN_WEBSITE'
 project_name: upcheck_project
 service_name: kafka
 ```
@@ -42,8 +41,7 @@ service_name: kafka
 ```yaml
   type: postgres-aiven
   dbname: upcheck
-  email: my@email.com
-  password: 'XYZ123'
+  password: 'VERY_LONG_GENERATED_TOKEN_COPIED_FROM_AIVEN_WEBSITE'
   project_name: upcheck_project
   service_name: postgres
 ```
