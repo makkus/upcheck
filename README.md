@@ -20,7 +20,7 @@ To show the kind of tasks *upcheck* can do, here's how you would execute checks 
 
 In this example, we tell *upcheck* to use Kafka and Postgres services from [Aiven](https://aiven.io), for which there exist plugins.
 
-In order to specify necessary details for those services, we need to (yaml) files, one for each service. Something like:
+In order to specify necessary details for those services, we need two (yaml) files, one for each service. Something like:
 
 ``kafka.yaml``:
 
@@ -60,6 +60,8 @@ Now we need to actually produce our check events. For that, we open up a differe
 > upcheck check --target ~/kafka.yaml --repeat 60 --terminal
 ```
 
+You should be able
+
 ## Links
 
 - [Documentation](https://makkus.gitlab.io/upcheck/)
@@ -78,6 +80,11 @@ Now we need to actually produce our check events. For that, we open up a differe
 The binary can update itself. To do that, issue:
 
     upcheck self update
+
+## ToDos
+
+- allow table name to be configurable  
+- more documentation
 
 ## Known issues
 

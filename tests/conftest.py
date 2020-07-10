@@ -29,6 +29,8 @@ def kafka_client():
         else False
     )
 
+    run_integration_tests = False
+
     if not run_integration_tests:
         return None
 
@@ -58,6 +60,17 @@ async def postgres_connection():
 
     password = os.environ.get("AIVEN_TOKEN", None)
     if password is None:
+        return None
+
+    run_integration_tests = (
+        True
+        if os.environ.get("RUN_INTEGRATION_TESTS", "false").lower() == "true"
+        else False
+    )
+
+    run_integration_tests = False
+
+    if not run_integration_tests:
         return None
 
     project_name = None
