@@ -18,9 +18,22 @@ AVAILABLE_TARGET_TYPES = ["kafka", "postgres", "kafka-aiven", "postgres-aiven"]
 
 
 class CheckTarget(metaclass=ABCMeta):
+    """A check target is an object that consumes 'CheckResult's.
+
+    The main reason to have an abstract base class here is to enable very flexible plumbing of sources and targets,
+    as well as share code for configuration, as well as enable easy addition of new source types.
+    """
+
     @classmethod
     def create_from_file(cls, path: Union[str, Path]):
+        """Create a target from a (yaml) file.
 
+        Args:
+            path: the path to the target config
+
+        Returns:
+            CheckTarget: the target object
+        """
         if isinstance(path, str):
             path = Path(os.path.expanduser(path))
 
@@ -49,7 +62,14 @@ class CheckTarget(metaclass=ABCMeta):
 
     @classmethod
     def create_from_dict(cls, target_config: MutableMapping[str, Any]):
+        """Create a target from a dict.
 
+        Args:
+            target_config: the configuration for the target
+
+        Returns:
+            CheckTarget: the target object
+        """
         target_type = target_config.pop("type", None)
         if target_type is None:
             raise UpcheckException(
@@ -100,17 +120,24 @@ class CheckTarget(metaclass=ABCMeta):
         return target
 
     async def connect(self) -> None:
+        """Connect the target."""
         pass
 
     async def disconnect(self) -> None:
+        """Disconnect the target."""
         pass
 
     @abstractmethod
     def get_id(self) -> str:
+        """The internal id of the target.
+
+        Should be unique across the application invocation.
+        """
         pass
 
     @abstractmethod
     async def write(self, *results: CheckMetric) -> None:
+        """Write a result to this target."""
         pass
 
     def __repr__(self):
@@ -118,6 +145,11 @@ class CheckTarget(metaclass=ABCMeta):
 
 
 class CollectorCheckTarget(CheckTarget):
+    """Target to collect results.
+
+    This is mainly used in testing, but can also be used to hold test results in memory for other reasons.
+    """
+
     def __init__(self, id: Optional[str] = None):
 
         if id is None:

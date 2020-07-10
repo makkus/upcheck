@@ -5,11 +5,11 @@ from upcheck.targets import CheckTarget
 
 
 class TerminalTarget(CheckTarget):
-    """Simple target to print"""
+    """Simple target to print check results to the terminal."""
 
     def __init__(self, **config):
 
-        self._config = config
+        self._config = config  # ignored for now
 
     def get_id(self) -> str:
         return "terminal"

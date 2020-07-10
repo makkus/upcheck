@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Only used in development, ignore."""
+
 import os
 
 import asyncclick as click

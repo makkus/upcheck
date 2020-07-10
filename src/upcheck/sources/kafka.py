@@ -19,6 +19,18 @@ log = logging.getLogger("upcheck")
 
 
 class KafkaSource(CheckSource):
+    """Source to consume check results from a Kafka topic.
+
+    Args:
+        hsot (str): the host that runs the Kafka service
+        port (int): the port on which Kafka listens
+        topic (str): the topic to send check results to
+        group_id (str): the group id of the Kafka consumer
+        cafile (str): path to a ca file
+        certfile (str): path to a cert file
+        keyfile (str): path to a key file
+    """
+
     def __init__(
         self,
         host: str,
@@ -80,6 +92,20 @@ class KafkaSource(CheckSource):
 
 
 class AivenKafkaSoure(KafkaSource):
+    """Convenience source class to not have to provide most of the Kafka config values manually.
+
+    Only useful if using the Aiven service.
+
+    Args:
+        topic (str): the topic to send check results to
+        password (str): the password of the Aiven account (if also providing the 'email' value), or an authentication token
+        email (str): optional account email
+        group_id (str): the group id of the Kafka consumer
+        project_name (str): the name of the  aiven project to use
+        service_name (str): the name of the Kafka service to use
+
+    """
+
     def __init__(
         self,
         topic: str,

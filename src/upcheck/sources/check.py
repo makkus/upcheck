@@ -17,6 +17,13 @@ log = logging.getLogger("upcheck")
 
 
 class ActualCheckCheckSource(CheckSource):
+    """CheckSource that actually performs checks.
+
+    Args:
+        *url_checks (UrlCheck): a list of UrlCheck objects to run
+        repeat (int): (optional) amount of seconds to repeat each set of checks, if not specified, checks will only be run once
+    """
+
     @classmethod
     def create_check_source(
         cls,
@@ -24,6 +31,11 @@ class ActualCheckCheckSource(CheckSource):
         repeat: Optional[int] = None,
         id: Optional[str] = None
     ) -> "ActualCheckCheckSource":
+        """Convenience method to create an ActualCheckCheckSource from a config file.
+
+        Args:
+            url_or_config_file_path: a list of url strings and/or file paths
+        """
 
         url_checks: Iterable[UrlCheck] = UrlCheck.create_checks(
             *url_or_config_file_paths

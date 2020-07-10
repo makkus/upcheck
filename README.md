@@ -9,12 +9,15 @@
 
 *Collect website availability metrics*
 
+## Links
+- [Documentation](https://makkus.gitlab.io/upcheck/)
+- [Source code](https://gitlab.com/makkus/upcheck)
+
 ## Description
 
 `upcheck` checks whether websites are up, how long they take to response, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
 
-
-### Example
+## Example use-case
 
 To show the kind of tasks *upcheck* can do, here's how you would execute checks against a website every 60 seconds and send the results to a Kafka topic. Another instance of *upcheck* listens to that topic, and writes the messages to a Postgres database.
 
@@ -62,11 +65,6 @@ Now we need to actually produce our check events. For that, we open up a differe
 We should be able to see test results coming into our Postgres database table now.
 
 For more information about how to run checks, and configure endpoints, please refer to the [documentation](https://makkus.gitlab.io/upcheck/docs/usage).
-
-## Links
-
-- [Documentation](https://makkus.gitlab.io/upcheck/)
-- [Source code](https://gitlab.com/makkus/upcheck)
 
 ## Downloads
 

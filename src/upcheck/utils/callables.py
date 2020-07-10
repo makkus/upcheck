@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+"""Async and thread-related utilities."""
+
 import asyncio
 import logging
 import os

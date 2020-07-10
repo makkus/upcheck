@@ -23,6 +23,10 @@ console = Console()
 # atexit.register(show_cursor)
 
 
+# =============================================================
+# Utility functions
+
+
 def pretty_print_exception(exc: Exception):
     """Pretty prints an exception to the terminal."""
 
@@ -118,6 +122,10 @@ def handle_exc(func, exit=True, exit_code=1):
     func_wrapper.__name__ = func.__name__
     func_wrapper.__doc__ = func.__doc__
     return func_wrapper
+
+
+# ============================================================================
+# main
 
 
 @click.group()

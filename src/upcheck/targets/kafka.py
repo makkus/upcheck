@@ -16,6 +16,18 @@ CHECK_METRIC_WRITER = DatumWriter(CHECK_METRIC_SCHEMA)
 
 
 class KafkaTarget(CheckTarget):
+    """Target to send check results to a Kafka topic.
+
+    Args:
+        hsot (str): the host that runs the Kafka service
+        port (int): the port on which Kafka listens
+        topic (str): the topic to send check results to
+        group_id (str): ignored for sources, only present to prevent errors when re-using a config for both Kafka source and target
+        cafile (str): path to a ca file
+        certfile (str): path to a cert file
+        keyfile (str): path to a key file
+    """
+
     def __init__(
         self,
         host: str,
@@ -76,6 +88,20 @@ class KafkaTarget(CheckTarget):
 
 
 class AivenKafkaTarget(KafkaTarget):
+    """Convenience target class to not have to provide most of the Kafka config values manually.
+
+    Only useful if using the Aiven service.
+
+    Args:
+        topic (str): the topic to send check results to
+        password (str): the password of the Aiven account (if also providing the 'email' value), or an authentication token
+        email (str): optional account email
+        group_id (str): ignored for sources, only present to prevent errors when re-using a config for both Kafka source and target
+        project_name (str): the name of the  aiven project to use
+        service_name (str): the name of the Kafka service to use
+
+    """
+
     def __init__(
         self,
         topic: str,

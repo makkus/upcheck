@@ -17,10 +17,28 @@ AVAILABLE_SOURCE_TYPES = ["kafka", "kafka-aiven"]
 
 
 class CheckSource(metaclass=ABCMeta):
+    """A check source is an object that emits 'CheckResult's.
+
+    The main CheckSource class is the 'ActualCheckCheckSource', which performs checks against websites. The other
+    currently implemented CheckSource class is KafkaCheckSource, which listens to Kafka topics for check result messages.
+
+    The main reason to have an abstract base class here is to enable very flexible plumbing of sources and targets,
+    as well as share code for configuration, as well as enable easy addition of new source types.
+    """
+
     @classmethod
     def create_from_file(
         cls, path: Union[str, Path], force_source_type: Optional[str] = None
-    ):
+    ) -> "CheckSource":
+        """Create a source from a (yaml) file.
+
+        Args:
+            path: the path to the source config
+            force_source_type: (optionally) ensure that the config is of the specified type
+
+        Returns:
+            CheckSource: the CheckSource object
+        """
 
         if isinstance(path, str):
             path = Path(os.path.expanduser(path))
@@ -56,6 +74,15 @@ class CheckSource(metaclass=ABCMeta):
         source_config: MutableMapping[str, Any],
         force_source_type: Optional[str] = None,
     ):
+        """Create a source from a dict.
+
+        Args:
+            source_config: the configuration dict
+            force_source_type: (optionally) ensure that the config is of the specified type
+
+        Returns:
+            CheckSource: the CheckSource object
+        """
 
         source_type: str = source_config.pop("type", "kafka")
         if force_source_type:
@@ -104,20 +131,31 @@ class CheckSource(metaclass=ABCMeta):
         return target
 
     async def connect(self) -> None:
+        """Connect the source."""
         pass
 
     async def disconnect(self) -> None:
+        """Disconnect the source."""
         pass
 
     @abstractmethod
     def get_id(self) -> str:
+        """The internal id of the source.
+
+        Should be unique across the application invocation.
+        """
         pass
 
     @abstractmethod
     async def start(self) -> AsyncIterator[CheckResult]:
+        """Start the source.
+
+        This should async-yield CheckResult items.
+        """
         pass
 
     async def stop(self) -> Optional[Iterable[CheckResult]]:
+        """Stop the source."""
         return None
 
     def __repr__(self):

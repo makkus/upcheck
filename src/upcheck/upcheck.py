@@ -47,6 +47,7 @@ class Upcheck(object):
         self._console = console
 
     async def connect(self):
+        """Connect the source and all targets."""
 
         log.debug(f"Trying to connect to source: {self._source.get_id()}")
 
@@ -78,6 +79,7 @@ class Upcheck(object):
             raise UpcheckException(msg=msg, reason=reason)
 
     async def disconnect(self):
+        """Disconnect the source and all targets"""
 
         log.debug(f"Disconnecting source {self._source.get_id()}...")
         await self._source.disconnect()
@@ -93,6 +95,13 @@ class Upcheck(object):
                 log.warning(f"Failed to disconnect target '{_target.get_id()}': {e}")
 
     async def start(self, wait_for_keypress: Optional[bool] = True):
+        """Start the check/listen process.
+
+        TODO: implement a callback based way to stop the source
+
+        Args:
+            wait_for_keypress (bool): if set to True, will wait for the 'q' key to be pressed, after which the source task will be stopped.
+        """
 
         # TODO; use callback instead of 'wait_for_keypress'
         no_wait = os.getenv("UPCHECK_NO_WAIT", None)
@@ -127,6 +136,7 @@ class Upcheck(object):
         log.debug("upcheck pipeline stopped.")
 
     async def write_result(self, check_result: CheckResult) -> None:
+        """Write result to all targets."""
 
         if not self._targets:
             return

@@ -12,6 +12,18 @@ from upcheck.utils.aiven import UpcheckAivenClient
 
 
 class PostgresTarget(CheckTarget):
+    """Class to write check results to a postgres database.
+
+    Args:
+        username (str): the Postgres username
+        password (str): the Postgres password
+        dbname (str): the database name
+        host (str): the host that runs the Postgres service
+        port (int): the port the Postgres service listens on
+        sslmode (str): the ssl mode to use
+        sslrootcert (str): an optional path to a ca cert pem file
+    """
+
     def __init__(
         self,
         username: str,
@@ -114,6 +126,20 @@ class PostgresTarget(CheckTarget):
 
 
 class AivenPostgresTarget(PostgresTarget):
+    """Convenience source class to not have to provide most of the Kafka config values manually.
+
+    Only useful if using the Aiven service.
+
+    Args:
+        dbname (str): the database name
+        password (str): the password of the Aiven account (if also providing the 'email' value), or an authentication token
+        email (str): optional account email
+        group_id (str): the group id of the Kafka consumer
+        project_name (str): the name of the  aiven project to use
+        service_name (str): the name of the Postgres service to use
+
+    """
+
     def __init__(
         self,
         dbname: str,

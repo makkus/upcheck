@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+"""Re-usable command-line utilities to self-update an application, as well as get version information at runtime."""
+
 from __future__ import absolute_import, division, print_function
 import logging
 import os
