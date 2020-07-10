@@ -52,7 +52,7 @@ The binary can update itself. To do that, issue:
 ## Known issues
 
 - it looks like on some systems/terminals the curser is disabled after an *upcheck* run, even after the programm is finished. If this happens, issue a ``reset`` command to get your normal terminal style back. Not sure what causes that yet. Happens to me when I 'ssh' into a machine and use *upcheck* then.
-- end-to-end integration test takes a long time to establish connections to source/targets, needs investigation
+- end-to-end integration test takes a long time to establish connections to source/targets, also fails every now and then but works in subsequent runs without change. Probably multiprocessing-related, needs investigation.
 
 # Development
 

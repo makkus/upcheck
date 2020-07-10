@@ -68,7 +68,8 @@ coverage:
   before_script:
     - "pip install --extra-index-url https://pkgs.frkl.io/frkl/dev .[testing,all]"
   script:
-    - coverage run --source=upcheck -m pytest
+    - coverage run -m pytest
+    - coverage combine
     - coverage report -m
 
 pages:

@@ -20,12 +20,12 @@ except:
 
 # flake8: noqa
 
-try:
-    import uvloop
-
-    uvloop.install()
-except Exception:
-    pass
+# try:
+#     import uvloop
+#
+#     uvloop.install()
+# except Exception:
+#     pass
 
 click.anyio_backend = "asyncio"
 

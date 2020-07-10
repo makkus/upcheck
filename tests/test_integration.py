@@ -48,6 +48,8 @@ async def test_integration_no_target():
 @pytest.mark.anyio
 async def test_integration_kafka_target(httpserver, kafka_client):
 
+    # TODO: cleanup topic
+
     if not run_integration_tests:
         return
 
@@ -106,6 +108,8 @@ async def test_integration_kafka_target(httpserver, kafka_client):
 @pytest.mark.anyio
 async def test_integration_postgres_target(httpserver, postgres_connection):
 
+    # TODO: cleanup db
+
     if not run_integration_tests:
         return
 
@@ -155,6 +159,8 @@ async def test_integration_postgres_target(httpserver, postgres_connection):
 
 @pytest.mark.anyio
 async def test_integration_end_to_end(httpserver, postgres_connection):
+
+    # TODO: cleanup topic & database
 
     if not run_integration_tests:
         return
@@ -207,7 +213,15 @@ async def test_integration_end_to_end(httpserver, postgres_connection):
             print("starting listening for kafka messages..")
 
             lock.release()  # type: ignore
-            wrap_async_task(upcheck.start, False)
+
+            async def wrap():
+                try:
+                    await upcheck.connect()
+                    await upcheck.start()
+                finally:
+                    await upcheck.disconnect()
+
+            wrap_async_task(wrap, False)
 
         except Exception as e:
             print(e)
@@ -237,7 +251,15 @@ async def test_integration_end_to_end(httpserver, postgres_connection):
             upcheck = Upcheck(source=source, targets=[kafka_target, collector_target])
 
             print("starting checks...")
-            wrap_async_task(upcheck.start, False)
+
+            async def wrap():
+                try:
+                    await upcheck.connect()
+                    await upcheck.start()
+                finally:
+                    await upcheck.disconnect()
+
+            wrap_async_task(wrap, False)
             print("checks finished")
 
             for r in collector_target.results:

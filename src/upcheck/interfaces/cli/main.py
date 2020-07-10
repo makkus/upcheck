@@ -17,7 +17,10 @@ console = Console()
 
 
 def show_cursor():
-    console.show_cursor(True)
+    try:
+        console.show_cursor(True)
+    except Exception:
+        pass
 
 
 atexit.register(show_cursor)
