@@ -16,19 +16,49 @@
 
 ### Example
 
-Use one *upcheck* instance to perform the checks and send the results to a Kafka topic, and another one to listen to that Kafka topic, and forward any check result messages to a Postgres database:
+To show the kind of tasks *upcheck* can do, here's how you would execute checks against a website every 60 seconds and send the results to a Kafka topic. Another instance of *upcheck* listens to that topic, and writes the messages to a Postgres database.
+
+In this example, we tell *upcheck* to use Kafka and Postgres services from [Aiven](https://aiven.io), for which there exist plugins.
+
+In order to specify necessary details for those services, we need to (yaml) files, one for each service. Something like:
+
+``kafka.yaml``:
+
+``` yaml
+type: kafka-aiven
+topic: check_metrics
+group_id: upcheck
+email: my@email.com
+password: 'XYZ123'
+project_name: upcheck_project
+service_name: kafka
+```
+
+``postgres.yaml``:
+
+```yaml
+  type: postgres-aiven
+  dbname: upcheck
+  email: my@email.com
+  password: 'XYZ123'
+  project_name: upcheck_project
+  service_name: postgres
+```
+
+First, we need to start our listener instance:
 
 ``` console
-# start the listener
 > upcheck kafka-listen --source ~/kafka.yaml --target ~/postgres.yaml --terminal
+```
+
+*Note*: the ``--terminal`` flag tells *upcheck* to print any received messages to the terminal, which is nice for debugging
+
+Now we need to actually produce our check events. For that, we open up a different terminal and issue something like:
+
+``` console
 # in a different terminal, start the check process
-> upcheck check --target ~/kafka.yaml --terminal --repeat 60
-```  
-
-
-**Notes**:
-- the ``--terminal`` flags are used to print incoming check result to the terminal, for debugging purposes
-
+> upcheck check --target ~/kafka.yaml --repeat 60 --terminal
+```
 
 ## Links
 

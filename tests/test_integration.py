@@ -24,6 +24,8 @@ run_integration_tests = (
     else False
 )
 
+run_integration_tests = False
+
 
 @pytest.mark.anyio
 async def test_integration_no_target():
