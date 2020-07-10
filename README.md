@@ -56,7 +56,6 @@ First, we need to start our listener instance:
 Now we need to actually produce our check events. For that, we open up a different terminal and issue something like:
 
 ``` console
-# in a different terminal, start the check process
 > upcheck check --target ~/kafka.yaml --repeat 60 --terminal https://frkl.io
 ```
 

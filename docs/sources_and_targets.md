@@ -1,6 +1,6 @@
 # Sources & Targets
 
-*upcheck* operates on units called *sources* and *targets*. A *source* is a component that emits check metrics, and
+*upcheck* works by using components called *sources* and *targets*. A *source* is a component that emits check metrics, and
 a *target* is a component that -- who would have guessed? -- receives those. An *upcheck* run consists of a single *source* component, and one or several *targets*.
 
 ## Sources
