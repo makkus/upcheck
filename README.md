@@ -53,7 +53,7 @@ First, we need to start our listener instance:
 - initializing kafka client and connecting to targets...
  -> done
 - listening for messages, forwarding them to targets as they arrive
-   -> press 'q' to stop the checks
+   -> press 'q' to stop listening
 ```
 
 *Note*: the ``--terminal`` flag tells *upcheck* to print any received messages to the terminal, which is nice for debugging
