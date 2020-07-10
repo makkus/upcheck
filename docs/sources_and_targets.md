@@ -235,6 +235,8 @@ Use like:
 
 Writes check results to a table in a Postgres database.
 
+Currently, it's not possible to specify the table name to write to, it's hardcoded as 'check_results'. To create that table, please run the ``schema.sql`` from: https://gitlab.com/makkus/upcheck/-/blob/develop/db/schema.sql
+
 #### Configuration
 
 ``type`` (required value: ``psotgres``)
