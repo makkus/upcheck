@@ -21,6 +21,17 @@ def kafka_client():
     if password is None:
         return None
 
+    os.environ["UPCHECK_NO_WAIT"] = "true"
+
+    run_integration_tests = (
+        True
+        if os.environ.get("RUN_INTEGRATION_TESTS", "false").lower() == "true"
+        else False
+    )
+
+    if not run_integration_tests:
+        return None
+
     project_name = None
     kafka_service_name = None
 
