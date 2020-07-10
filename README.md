@@ -52,7 +52,7 @@ First, we need to start our listener instance:
 > upcheck kafka-listen --source kafka.yaml --target postgres.yaml --terminal
 - initializing kafka client and connecting to targets...
  -> done
-- listening for messages, forwarding them to targets as they arrive results to targets
+- listening for messages, forwarding them to targets as they arrive
    -> press 'q' to stop the checks
 ```
 
