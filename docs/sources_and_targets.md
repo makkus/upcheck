@@ -5,7 +5,7 @@ a *target* is a component that -- who would have guessed? -- receives those. An 
 
 ## Sources
 
-Sources emit check result data. Usually, this will be done directly after a check. In some cases you might want to use Kafka as an intermediate data streaming component, in which case you would use one of the *kafka-*' sources below.
+Sources emit check result data. Usually, this will be done directly after a check. In some cases you might want to use Kafka as an intermediate data streaming component, in which case you would use one of the '*kafka-*' sources below.
 
 ### source: ``check``
 
@@ -248,7 +248,7 @@ Currently, it's not possible to specify the table name to write to, it's hardcod
 ``password`` (required)
 :    The password to authenticate against the Postgres database.
 
-``dbname``` (required)
+``dbname`` (required)
 :    The databsae name.
 
 ``host`` (optional, defaults to ``localhost``)

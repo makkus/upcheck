@@ -155,7 +155,10 @@ class CheckSource(metaclass=ABCMeta):
         pass
 
     async def stop(self) -> Optional[Iterable[CheckResult]]:
-        """Stop the source."""
+        """Stop the source.
+
+        Should return (if necessary) any check result items that haven't been 'yielded' by 'start'.
+        """
         return None
 
     def __repr__(self):
