@@ -15,7 +15,7 @@
 
 ## Description
 
-`upcheck` checks whether websites are up, how long they take to response, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
+`upcheck` checks whether websites are up, how long they take to respond, and, optionally, whether they match a provided regex. It can also, if wanted, push those metrics to a target like a Kafka topic, or directly into a Postgres database.
 
 ## Example use-case
 

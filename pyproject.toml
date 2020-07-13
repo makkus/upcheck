@@ -40,6 +40,7 @@ palette = {primary = "blue grey", accent = "pink"}
 
 [tool.portray.mkdocs]
 repo_url = "https://gitlab.com/frkl/upcheck"
+site_url = "https://makkus.gitlab.io/upcheck"
 repo_name = "upcheck"
 plugins = [
   "search",
