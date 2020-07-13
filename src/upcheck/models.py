@@ -359,8 +359,8 @@ class UrlCheck(object):
         started = tz.localize(datetime.now(), is_dst=None)
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(self.url)
+            with httpx.Client() as client:
+                response = client.get(self.url)
                 html = response.text
                 response_code = response.status_code
 
