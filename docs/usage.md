@@ -23,7 +23,7 @@ Its main configuration parameters (``CHECK_ITEM``) are the check details: the we
 ``upcheck`` can check a single or multiple websites in one go. Checks are specified as arguments at the end of the ``upcheck`` command. Each such argument is a string that is either a:
 
 *- path to a file*
-:    This will read the file with this path. The content of the file must be a valid [YAML](https://yaml.org) list, where each item is eithr a string (indicating the url to test, or a dictionary with a mandatory ``url``  and an optional ``regex`` key. Check [the ``check`` target section](../sources_and_targets/#source-check) in the *upcheck* documentation for more details and examples.
+:    This will read the file with this path. The content of the file must be a valid [YAML](https://yaml.org) list, where each item is either a string (indicating the url to test, or a dictionary with a mandatory ``url``  and an optional ``regex`` key. Check [the ``check`` target section](../sources_and_targets/#source-check) in the *upcheck* documentation for more details and examples.
 
 *- url*
 :    If no file with a path equalling the specified string exists, the string will be interpretes as a url. In this case a simple website check using that url will be run, without any regex checking.

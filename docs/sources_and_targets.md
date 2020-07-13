@@ -49,7 +49,7 @@ Here are a few examples of 'real-life' check configuration yaml files:
 
 ##### Single url, regex
 
-{{ inline_file_as_codeblock('examples/single_item_with_regex.yaml') }}
+{{ inline_file_as_codeblock('examples/single_item_with_regex.yaml', format="yaml") }}
 
 ##### Multiple urls, mixed style (string and dict)
 
